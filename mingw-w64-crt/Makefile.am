@@ -937,6 +937,7 @@ src_pre_msvcrt40=\
   misc/__dstbias.c \
   misc/__set_app_type.c \
   misc/_dstbias.c \
+  misc/_set_error_mode.c \
   misc/dummy__setusermatherr.c \
   stdio/_filelengthi64.c \
   stdio/_findfirst32i64.c \
