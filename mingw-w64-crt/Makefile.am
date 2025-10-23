@@ -928,6 +928,7 @@ src_pre_msvcrt20=\
   misc/_setjmp3.S \
   misc/_wasctime.c \
   misc/_wfullpath.c \
+  stdio/_wfdopen.c \
   stdio/_wfindfirst32.c \
   stdio/_wfindnext32.c \
   stdio/_wstat32.c \
