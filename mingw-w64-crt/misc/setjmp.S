@@ -9,6 +9,7 @@
 #ifndef __arm64ec__
 
 #ifndef __aarch64__
+#ifndef I386_SETJMP3_ONLY
         .globl  __MINGW_USYMBOL(__intrinsic_setjmp)
         .def    __MINGW_USYMBOL(__intrinsic_setjmp); .scl 2; .type 32; .endef
         .globl  __MINGW_USYMBOL(_setjmp)
@@ -18,6 +19,7 @@
         .globl  __MINGW_USYMBOL(__MINGW_IMP_SYMBOL(_setjmp))
 #ifndef __i386__
         .set    __MINGW_USYMBOL(__MINGW_IMP_SYMBOL(_setjmp)), __MINGW_USYMBOL(__MINGW_IMP_SYMBOL(_setjmpex))
+#endif
 #endif
 #endif
 
@@ -53,8 +55,10 @@ __MINGW_USYMBOL(__MINGW_IMP_SYMBOL(_setjmpex)):
 .data
 __MINGW_USYMBOL(__MINGW_IMP_SYMBOL(_setjmp3)):
         .long   __MINGW_USYMBOL(_setjmp3)
+#ifndef I386_SETJMP3_ONLY
 __MINGW_USYMBOL(__MINGW_IMP_SYMBOL(_setjmp)):
         .long   __MINGW_USYMBOL(_setjmp)
+#endif
 .text
 #endif
 
@@ -62,6 +66,11 @@ __MINGW_USYMBOL(__MINGW_IMP_SYMBOL(_setjmp)):
 #if defined(__i386__)
 __MINGW_USYMBOL(_setjmp3):
         pushl   4(%esp)
+#ifdef I386_SETJMP3_ONLY
+        /* local setjmp_common function is not being compiled, and we have only CRT _setjmp function */
+        /* _setjmp always inspects SEH try_level and we will overwrite jmp_buf.TryLevel below if needed */
+        calll   *__MINGW_USYMBOL(__MINGW_IMP_SYMBOL(_setjmp))
+#else
         /* edx == -1 -> setjmp_common will NOT inspect SEH try_level */
         /* edx != -1 -> setjmp_common will inspect SEH try_level */
         /* Do not inspect SEH try_level when _Count >= 2 -> means that try_level is provided as _TryLevel param */
@@ -70,6 +79,7 @@ __MINGW_USYMBOL(_setjmp3):
         movzbl  %dl,%edx
         neg     %edx
         calll   __MINGW_LSYMBOL(setjmp_common)
+#endif
         popl    %ecx                 /* jmp_buf */
 
         movl    %esp,16(%ecx)        /* jmp_buf.Esp */
@@ -113,6 +123,7 @@ __MINGW_USYMBOL(_setjmp3):
         xorl    %eax,%eax
         retl
 
+#ifndef I386_SETJMP3_ONLY
 __MINGW_USYMBOL(__intrinsic_setjmp):
 __MINGW_USYMBOL(_setjmp):
         xorl    %edx,%edx            /* edx != -1 -> setjmp_common will inspect SEH try_level */
@@ -137,6 +148,7 @@ __MINGW_LSYMBOL(setjmp_common):
         movl    %edx,28(%ecx)        /* jmp_buf.TryLevel */
         xorl    %eax, %eax
         retl
+#endif
 
 #elif defined(__x86_64__)
 __MINGW_USYMBOL(setjmp):
