@@ -27,6 +27,30 @@ __MINGW_USYMBOL(longjmp):
         movq    %rdx,%rax            /* retval */
         cmpq    $1,%rax              /* check that retval is non-zero */
         adcq    $0,%rax              /* if not then increase by one via CF */
+        cmpq    $0,(%rcx)            /* jmp_buf->Frame */
+        je      .Llongjmp_skip_seh
+        /* Logic of SEH longjmp implementation based on x86_64 wine longjmp code from:
+           https://gitlab.winehq.org/wine/wine/-/blob/wine-10.20/dlls/msvcrt/except_x86_64.c#L94-110
+         */
+        pushq   %rcx
+        pushq   %rdx
+        subq    $192,(%rsp)             /* allocate roundup16(32+sizeof(EXCEPTION_RECORD)) */
+        movl    $0x80000026,0x20(%rsp)  /* EXCEPTION_RECORD.ExceptionCode = STATUS_LONGJUMP */
+        movl    $0,0x24(%rsp)           /* EXCEPTION_RECORD.ExceptionFlags = 0 */
+        movq    $0,0x28(%rsp)           /* EXCEPTION_RECORD.ExceptionRecord = NULL */
+        movq    $0,0x30(%rsp)           /* EXCEPTION_RECORD.ExceptionAddress = NULL */
+        movl    $1,0x38(%rsp)           /* EXCEPTION_RECORD.NumberParameters = 1 */
+        movq    %rcx,0x40(%rsp)         /* EXCEPTION_RECORD.ExceptionInformation[0] = jmp_buf */
+        movq    0x50(%rcx),%rdx         /* TargetIp = jmp_buf->Rip */
+        movq    (%rcx),%rcx             /* TargetFrame = jmp_buf->Frame */
+        leaq    0x20(%rsp),%r8          /* ExceptionRecord = &EXCEPTION_RECORD */
+        movq    %rax,%r9                /* ReturnValue = retval */
+        callq   *__MINGW_USYMBOL(__MINGW_IMP_SYMBOL(RtlUnwind))(%rip)
+        /* RtlUnwind should not return, if it happens then cleanup stack and continue */
+        addq    $192,(%rsp)
+        popq    %rdx
+        popq    %rcx
+        .Llongjmp_skip_seh:
         movq    0x8(%rcx),%rbx       /* jmp_buf->Rbx */
         movq    0x18(%rcx),%rbp      /* jmp_buf->Rbp */
         movq    0x20(%rcx),%rsi      /* jmp_buf->Rsi */
