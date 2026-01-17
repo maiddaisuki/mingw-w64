@@ -913,6 +913,8 @@ src_pre_msvcrt20=\
   misc/__p__winver.c \
   misc/__timezone.c \
   misc/__tzname.c \
+  misc/_beginthreadex.c \
+  misc/_endthreadex.c \
   stdio/_wfindfirst32.c \
   stdio/_wfindnext32.c \
   stdio/_wstat32.c \
@@ -1040,9 +1042,11 @@ src_pre_msvcr90=\
 src_pre_msvcr100=\
   misc/i386__XcptFilter.c \
   misc/i386__beginthread.c \
-  misc/i386__beginthreadex.c \
   misc/_invalid_parameter_noinfo_noreturn.c \
   misc/imaxdiv.c
+
+src_pre_msvcr100_post_msvcrt10=\
+  misc/i386__beginthreadex.c
 
 src_pre_msvcr110=\
   stdio/msvcr110pre_fstat32.c \
@@ -1127,6 +1131,7 @@ src_msvcrt20=\
   $(src_pre_msvcr80) \
   $(src_pre_msvcr90) \
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   misc/msvcrt20__getmainargs.c \
@@ -1139,6 +1144,7 @@ src_msvcrt40=\
   $(src_pre_msvcr80) \
   $(src_pre_msvcr90) \
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   misc/msvcrt__getmainargs.c \
@@ -1150,6 +1156,7 @@ src_msvcrtd=\
   $(src_pre_msvcr80) \
   $(src_pre_msvcr90) \
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   locale/___lc_codepage_func.c \
@@ -1162,6 +1169,7 @@ src_msvcr70=\
   $(src_pre_msvcr80) \
   $(src_pre_msvcr90) \
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   misc/__p__osplatform.c
@@ -1170,6 +1178,7 @@ src_msvcr71=\
   $(src_pre_msvcr80) \
   $(src_pre_msvcr90) \
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   misc/__p__osplatform.c
@@ -1177,6 +1186,7 @@ src_msvcr71=\
 src_msvcr80=\
   $(src_pre_msvcr90) \
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   $(src_pre_msvcr120_post_msvcr71) \
@@ -1184,6 +1194,7 @@ src_msvcr80=\
 
 src_msvcr90=\
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   $(src_pre_msvcr120_post_msvcr71) \
