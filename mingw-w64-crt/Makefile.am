@@ -1118,6 +1118,7 @@ src_crtdll=\
   misc/crtdll_stat.h \
   misc/crtdll___mingw_longjmp_noseh.c \
   misc/crtdll__getmainargs.c \
+  misc/crtdll__longjmpex.c \
   misc/crtdll_fstat.c \
   misc/crtdll_stat.c \
   misc/__p__mbctype.c
