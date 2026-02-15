@@ -80,8 +80,6 @@ static void __attribute__((noreturn)) catch_sigfpe(int signum
   printf("SIGFPE exception caught\n");
   assert(signum == SIGFPE);
 #ifdef _WIN32
-  /* FIXME: fpenum and _fpecode are broken for main thread */
-  if (main_threadid != GetCurrentThreadId())
   assert(fpenum == _fpecode);
   last_fpenum = fpenum;
 #endif
@@ -163,8 +161,6 @@ static int float_div_zero(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
     if (last_fpenum != _FPE_ZERODIVIDE)
     {
       printf("wrong FPE error detected: 0x%x\n", last_fpenum);
@@ -210,8 +206,6 @@ static int sse_float_div_zero(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
 #if defined(__i386__)
     /* If SSE floating point division by zero occurs then Windows system for 32-bit x86 processes
      * generates SEH exception STATUS_FLOAT_MULTIPLE_TRAPS instead of EXCEPTION_FLT_DIVIDE_BY_ZERO.
@@ -269,8 +263,6 @@ static int float80_div_zero(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
     if (last_fpenum != _FPE_ZERODIVIDE)
     {
       printf("wrong FPE error detected: 0x%x\n", last_fpenum);
@@ -320,8 +312,6 @@ static int float_invalid(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
     if (last_fpenum != _FPE_INVALID)
     {
       printf("wrong FPE error detected: 0x%x\n", last_fpenum);
@@ -367,8 +357,6 @@ static int sse_float_invalid(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
 #if defined(__i386__)
     /* If SSE floating point invalid operation occurs then Windows system for 32-bit x86 processes
      * generates SEH exception STATUS_FLOAT_MULTIPLE_TRAPS instead of EXCEPTION_FLT_INVALID_OPERATION.
@@ -426,8 +414,6 @@ static int float80_invalid(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
     if (last_fpenum != _FPE_INVALID)
     {
       printf("wrong FPE error detected: 0x%x\n", last_fpenum);
@@ -477,8 +463,6 @@ static int float_overflow(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
     if (last_fpenum != _FPE_OVERFLOW)
     {
       printf("wrong FPE error detected: 0x%x\n", last_fpenum);
@@ -524,8 +508,6 @@ static int sse_float_overflow(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
 #if defined(__i386__)
     /* If SSE floating point overflow occurs then Windows system for 32-bit x86 processes
      * generates SEH exception STATUS_FLOAT_MULTIPLE_FAULTS instead of EXCEPTION_FLT_OVERFLOW.
@@ -583,8 +565,6 @@ static int float80_overflow(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
     if (last_fpenum != _FPE_OVERFLOW)
     {
       printf("wrong FPE error detected: 0x%x\n", last_fpenum);
@@ -634,8 +614,6 @@ static int float_underflow(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
     if (last_fpenum != _FPE_UNDERFLOW)
     {
       printf("wrong FPE error detected: 0x%x\n", last_fpenum);
@@ -681,8 +659,6 @@ static int sse_float_underflow(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
 #if defined(__i386__)
     /* If SSE floating point underflow occurs then Windows system for 32-bit x86 processes
      * generates SEH exception STATUS_FLOAT_MULTIPLE_FAULTS instead of EXCEPTION_FLT_UNDERFLOW.
@@ -740,8 +716,6 @@ static int float80_underflow(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
     if (last_fpenum != _FPE_UNDERFLOW)
     {
       printf("wrong FPE error detected: 0x%x\n", last_fpenum);
@@ -791,8 +765,6 @@ static int float_inexact(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
     if (last_fpenum != _FPE_INEXACT)
     {
       printf("wrong FPE error detected: 0x%x\n", last_fpenum);
@@ -838,8 +810,6 @@ static int sse_float_inexact(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
 #if defined(__i386__)
     /* If SSE floating point inexact occurs then Windows system for 32-bit x86 processes
      * generates SEH exception STATUS_FLOAT_MULTIPLE_FAULTS instead of EXCEPTION_FLT_INEXACT_RESULT.
@@ -897,8 +867,6 @@ static int float80_inexact(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
     if (last_fpenum != _FPE_INEXACT)
     {
       printf("wrong FPE error detected: 0x%x\n", last_fpenum);
@@ -947,8 +915,6 @@ static int ten_x87_fld(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
     if (last_fpenum != _FPE_STACKOVERFLOW)
     {
       printf("wrong FPE error detected: 0x%x\n", last_fpenum);
@@ -980,8 +946,6 @@ static int raise_sigfpe(void)
     puts("result: PASSED, program recovered");
     ret = 0;
 #ifdef _WIN32
-    /* FIXME: fpenum is broken for main thread */
-    if (main_threadid != GetCurrentThreadId())
     if (last_fpenum != _FPE_EXPLICITGEN)
     {
       printf("wrong FPE error detected: 0x%x\n", last_fpenum);
