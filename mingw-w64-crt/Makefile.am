@@ -1294,6 +1294,8 @@ src_libmingwex=\
   misc/wmemchr.c         misc/wmemcmp.c             misc/wmemcpy.c          misc/wmemmove.c              misc/wmempcpy.c        \
   misc/wmemset.c         misc/mingw-access.c \
   misc/ftw32.c           misc/ftw32i64.c            misc/ftw64.c            misc/ftw64i32.c \
+  misc/__mingw_save_jmp_sigs.c \
+  misc/__mingw_restore_jmp_sigs.c \
   misc/__mingw_filename_cp.c  \
   \
   ssp/chk_fail.c         ssp/gets_chk.c             ssp/memcpy_chk.c        ssp/memmove_chk.c \

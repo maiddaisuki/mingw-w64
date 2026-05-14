@@ -203,6 +203,21 @@ extern "C" {
 #define _JMP_BUF_DEFINED
 #endif
 
+typedef struct {
+  jmp_buf buf;
+  int sigs_saved;
+  void (__cdecl*sigint)(int);
+  void (__cdecl*sigill)(int);
+  void (__cdecl*sigfpe)(int);
+  void (__cdecl*sigsegv)(int);
+  void (__cdecl*sigterm)(int);
+  void (__cdecl*sigbreak)(int);
+  void (__cdecl*sigabrt)(int);
+} _SIGJUMP_BUFFER;
+typedef _JBTYPE sigjmp_buf[(sizeof(_SIGJUMP_BUFFER) + sizeof(_JBTYPE) + 1) / sizeof(_JBTYPE)];
+void __cdecl __mingw_save_jmp_sigs(sigjmp_buf _SigBuf, int _SaveSigs);
+void __cdecl __mingw_restore_jmp_sigs(sigjmp_buf _SigBuf);
+
 _CRTIMP __MINGW_ATTRIB_NORETURN __attribute__ ((__nothrow__)) void __cdecl longjmp(jmp_buf _Buf, int _Value); /* for setjmp.h and non-i386 setjmpex.h */
 #ifdef __i386__
 _CRTIMP __MINGW_ATTRIB_NORETURN __attribute__ ((__nothrow__)) void __cdecl _longjmpex(jmp_buf _Buf, int _Value); /* for i386 setjmpex.h */
@@ -281,5 +296,21 @@ void * __cdecl __attribute__ ((__nothrow__)) mingw_getsp (void);
 #else
 #  define longjmp longjmp
 #endif
+
+#ifdef sigsetjmp
+#  undef sigsetjmp
+#endif
+#define sigsetjmp(SIGBUF, savesigs) ( \
+  __mingw_save_jmp_sigs((SIGBUF), (savesigs)), \
+  setjmp(((_SIGJUMP_BUFFER *)(SIGBUF))->buf) \
+)
+
+#ifdef siglongjmp
+#  undef siglongjmp
+#endif
+#define siglongjmp(SIGBUF, value) ( \
+  __mingw_restore_jmp_sigs((SIGBUF)), \
+  longjmp(((_SIGJUMP_BUFFER *)(SIGBUF))->buf, (value)) \
+)
 
 #pragma pop_macro("__has_builtin")
