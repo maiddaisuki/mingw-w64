@@ -102,8 +102,17 @@ __mingw_SEH_error_handler_helper (struct _EXCEPTION_RECORD* ExceptionRecord)
   void (*old_handler) (int);
   int reset_fpu = 0;
 
+  /* On platforms which use struct UNWIND_INFO for SEH exceptions is this handler
+   * registered with the UNW_FLAG_EHANDLER flag which cause that this handler is
+   * called only for exceptions and not for unwinding. This is done by "@except"
+   * keyword in the .set_handler asm directive. SEH exceptions on i386 does not
+   * use struct UNWIND_INFO at all and instead the handler is called for both
+   * exceptions and unwinding. So on i386 filter out all unwinding calls.
+   */
+#if defined(__i386__)
   if (ExceptionRecord->ExceptionFlags & EXCEPTION_UNWINDING)
     return ExceptionContinueSearch;
+#endif
 
   switch (ExceptionRecord->ExceptionCode)
     {
