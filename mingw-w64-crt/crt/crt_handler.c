@@ -96,10 +96,8 @@ __mingw_SEH_error_handler (struct _EXCEPTION_RECORD* ExceptionRecord,
    * use struct UNWIND_INFO at all and instead the handler is called for both
    * exceptions and unwinding. So on i386 filter out all unwinding calls.
    */
-#if defined(__i386__)
   if (ExceptionRecord->ExceptionFlags & EXCEPTION_UNWINDING)
     return ExceptionContinueSearch;
-#endif
 
   /* Despite that the CRT _XcptFilter() function is SEH __except filter function,
    * it directly executes the handler registered by CRT signal() function. Normally

@@ -22,10 +22,8 @@ illegal_instruction_handler(EXCEPTION_RECORD *ExceptionRecord,
                             CONTEXT *ContextRecord,
                             PVOID DispatcherContext __attribute__ ((unused)))
 {
-#if defined(__i386__)
   if (ExceptionRecord->ExceptionFlags & EXCEPTION_UNWINDING)
     return ExceptionContinueSearch;
-#endif
 
   if (!(ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) &&
       ExceptionRecord->ExceptionCode == STATUS_ILLEGAL_INSTRUCTION)
