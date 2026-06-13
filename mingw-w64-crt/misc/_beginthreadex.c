@@ -4,6 +4,7 @@
  * No warranty is given; refer to the file DISCLAIMER.PD within this package.
  */
 
+#include <stddef.h>
 #include <errno.h>
 #include <process.h>
 #include <windows.h>
@@ -13,6 +14,37 @@
 uintptr_t __cdecl __msvcrt_beginthread(_beginthread_proc_type start_address, unsigned stack_size, void *arglist);
 #define _beginthread __msvcrt_beginthread
 #endif
+
+static SIZE_T get_default_stack_commit_size(SIZE_T page_size)
+{
+  HMODULE module;
+  IMAGE_DOS_HEADER *dos_header;
+  IMAGE_NT_HEADERS *nt_headers;
+
+  /* Stack commit size is always used from the process exe binary, not from dll library. */
+  module = GetModuleHandleA(NULL);
+  if (!module)
+    return page_size;
+
+  dos_header = (IMAGE_DOS_HEADER *)module;
+  if (dos_header->e_magic != IMAGE_DOS_SIGNATURE)
+    return page_size;
+
+  nt_headers = (IMAGE_NT_HEADERS *)((BYTE *)dos_header + dos_header->e_lfanew);
+  if (nt_headers->Signature != IMAGE_NT_SIGNATURE)
+    return page_size;
+
+  if (nt_headers->FileHeader.SizeOfOptionalHeader < offsetof(typeof(nt_headers->OptionalHeader), SizeOfStackCommit) + sizeof(nt_headers->OptionalHeader.SizeOfStackCommit))
+    return page_size;
+
+  if (nt_headers->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR_MAGIC)
+    return page_size;
+
+  if (nt_headers->OptionalHeader.SizeOfStackCommit < page_size)
+    return page_size;
+
+  return (nt_headers->OptionalHeader.SizeOfStackCommit + page_size - 1) & ~(page_size - 1);
+}
 
 #if defined(__i386__)
 /* We need to make sure that we align the stack to 16 bytes for the sake of SSE */
@@ -26,12 +58,41 @@ static void __cdecl thread_func(void *data)
   _beginthreadex_proc_type start_address = thread_args[0];
   void *arglist = thread_args[1];
   unsigned *thread_id_ptr = thread_args[2];
-  HANDLE child_initialized = thread_args[3];
-  HANDLE child_can_run = thread_args[4];
+  BOOL decommit_stack = (uintptr_t)thread_args[3];
+  HANDLE child_initialized = thread_args[4];
+  HANDLE child_can_run = thread_args[5];
 
   /* Store our spawned thread id if the caller asked for it. */
   if (thread_id_ptr)
     *thread_id_ptr = GetCurrentThreadId();
+
+  /* Meaning of STACK_SIZE_PARAM_IS_A_RESERVATION:
+   * STACK_SIZE_PARAM_IS_A_RESERVATION  commit size     reserve size
+   * is unset                           stack_size arg  from PE header
+   * is set                             from PE header  stack_size arg
+   *
+   * If we were called with STACK_SIZE_PARAM_IS_A_RESERVATION which was
+   * not propagated to _beginthread() then simulate it by decommitting
+   * the amount of the stack which should stay reserved.
+   * Do it via VirtualFree() with MEM_DECOMMIT as described in the:
+   * Q315937: HOW TO: Trap Stack Overflow in a Visual C++ Application
+   * https://web.archive.org/web/20150112070324/http://support.microsoft.com/kb/315937
+   */
+  if (decommit_stack) {
+    SIZE_T page_size;
+    MEMORY_BASIC_INFORMATION mbi = {0};
+    if (VirtualQuery(&mbi, &mbi, sizeof(mbi)) == sizeof(mbi) && (page_size = mbi.RegionSize) > 0 && (page_size & (page_size-1)) == 0) {
+      PVOID stack_bottom = mbi.AllocationBase;
+      SIZE_T stack_size = (BYTE *)mbi.BaseAddress + page_size - (BYTE *)stack_bottom;
+      SIZE_T new_commit_size = get_default_stack_commit_size(page_size);
+      if (new_commit_size < stack_size - page_size) {
+        SIZE_T decommit_size = stack_size - new_commit_size;
+        PVOID guard_page = (BYTE *)stack_bottom + decommit_size - page_size;
+        if (VirtualFree(stack_bottom, decommit_size, MEM_DECOMMIT)) /* decommit reserved pages */
+          VirtualProtect(guard_page, page_size, PAGE_GUARD | PAGE_READWRITE, &(DWORD){0} /*out: OldProtect*/); /* reintroduce guard page */
+      }
+    }
+  }
 
   /* Inform the parent thread that we (child) have stopped using the
    * thread_args[] array (which is stored on the parent thread stack).
@@ -73,12 +134,13 @@ static void __cdecl thread_func(void *data)
 /* mingw-w64 _beginthreadex() implementation is wrapper around the CRT _beginthread() function. */
 uintptr_t __cdecl _beginthreadex(void *security, unsigned stack_size, _beginthreadex_proc_type start_address, void *arglist, unsigned initflag, unsigned *thread_id_ptr)
 {
-  void *thread_args[5];
+  void *thread_args[6];
   uintptr_t thread_handle;
   SECURITY_ATTRIBUTES *sec_attrs;
   HANDLE child_initialized;
   HANDLE child_can_run;
   BOOL create_suspended = FALSE;
+  BOOL decommit_stack = FALSE;
   BOOL inherit_handle = FALSE;
   SECURITY_DESCRIPTOR *dacl_descriptor = NULL;
 
@@ -90,7 +152,8 @@ uintptr_t __cdecl _beginthreadex(void *security, unsigned stack_size, _beginthre
     }
     if (initflag & CREATE_SUSPENDED)
       create_suspended = TRUE;
-    /* STACK_SIZE_PARAM_IS_A_RESERVATION is ignored, new thread would have just larger preallocated stack. */
+    if (stack_size && (initflag & STACK_SIZE_PARAM_IS_A_RESERVATION))
+      decommit_stack = TRUE;
   }
 
   if (security) {
@@ -120,8 +183,9 @@ uintptr_t __cdecl _beginthreadex(void *security, unsigned stack_size, _beginthre
   thread_args[0] = (void *)start_address;
   thread_args[1] = arglist;
   thread_args[2] = thread_id_ptr;
-  thread_args[3] = child_initialized;
-  thread_args[4] = child_can_run;
+  thread_args[3] = (void *)(uintptr_t)decommit_stack;
+  thread_args[4] = child_initialized;
+  thread_args[5] = child_can_run;
   thread_handle = _beginthread(thread_func, stack_size, thread_args);
 
   if (thread_handle != (uintptr_t)-1) {
