@@ -85,12 +85,6 @@
  */
 
 typedef enum {
-  Unlocked,        /* Not locked. */
-  Locked,          /* Locked but without waiters. */
-  Waiting,         /* Locked, may have waiters. */
-} mutex_state_t;
-
-typedef enum {
   Normal,
   Errorcheck,
   Recursive,
@@ -98,7 +92,6 @@ typedef enum {
 
 /* The heap-allocated part of a mutex. */
 typedef struct {
-  mutex_state_t state;
   mutex_type_t type;
   HANDLE event;       /* Auto-reset event. */
   unsigned rec_lock;  /* For recursive mutexes, the number of times the
@@ -205,43 +198,25 @@ static WINPTHREADS_INLINE int pthread_mutex_lock_intern(pthread_mutex_t *m, DWOR
     return error_code;
   }
 
-  mutex_state_t old_state = InterlockedExchange((long *)&mi->state, Locked);
-  if (unlikely(old_state != Unlocked)) {
-    /* The mutex is already locked. */
-
-    if (mi->type != Normal) {
-      /* Recursive or Errorcheck */
-      if (mi->owner == GetCurrentThreadId()) {
-        /* FIXME: A recursive mutex should not need two atomic ops when locking
-           recursively.  We could rewrite by doing compare-and-swap instead of
-           test-and-set the first time, but it would lead to more code
-           duplication and add a conditional branch to the critical path. */
-        InterlockedCompareExchange((long *)&mi->state, old_state, Locked);
-        if (mi->type == Recursive) {
-          mi->rec_lock++;
-          return 0;
-        } else {
-          /* type == Errorcheck */
-          return EDEADLK;
-        }
+  /* Recursive or Errorcheck */
+  if (mi->type != Normal) {
+    if (mi->owner == GetCurrentThreadId()) {
+      if (mi->type == Recursive) {
+        mi->rec_lock++;
+        return 0;
       }
-    }
 
-    while (InterlockedExchange((long *)&mi->state, Waiting) != Unlocked) {
-      /* For timed locking attempts, it is possible (although unlikely)
-         that we are woken up but someone else grabs the lock before us,
-         and we have to go back to sleep again. In that case, the total
-         wait may be longer than expected. */
-      unsigned r = _pthread_wait_for_single_object(mi->event, timeout);
-      switch (r) {
-      case WAIT_TIMEOUT:
-        return ETIMEDOUT;
-      case WAIT_OBJECT_0:
-        break;
-      default:
-        return EINVAL;
-      }
+      return EDEADLK;
     }
+  }
+
+  switch (_pthread_wait_for_single_object(mi->event, timeout)) {
+    case WAIT_TIMEOUT:
+      return ETIMEDOUT;
+    case WAIT_OBJECT_0:
+      break;
+    default:
+      return EINVAL;
   }
 
   if (mi->type != Normal)
@@ -297,8 +272,6 @@ int pthread_mutex_unlock(pthread_mutex_t *m)
   }
 
   if (unlikely(mi->type != Normal)) {
-    if (mi->state == Unlocked)
-      return EPERM;
     if (mi->owner != GetCurrentThreadId())
       return EPERM;
     if (mi->rec_lock > 0) {
@@ -307,10 +280,11 @@ int pthread_mutex_unlock(pthread_mutex_t *m)
     }
     mi->owner = (DWORD)-1;
   }
-  if (unlikely(InterlockedExchange((long *)&mi->state, Unlocked) == Waiting)) {
-    if (!SetEvent(mi->event))
-      return EINVAL;
+
+  if (!SetEvent(mi->event)) {
+    return EINVAL;
   }
+
   return 0;
 }
 
@@ -324,17 +298,34 @@ int pthread_mutex_trylock(pthread_mutex_t *m)
     return error_code;
   }
 
-  if (InterlockedCompareExchange((long *)&mi->state, Locked, Unlocked) == Unlocked) {
-    if (mi->type != Normal)
-      mi->owner = GetCurrentThreadId();
-    return 0;
-  } else {
-    if (mi->type == Recursive && mi->owner == GetCurrentThreadId()) {
-      mi->rec_lock++;
-      return 0;
-    }
-    return EBUSY;
+  switch (_pthread_wait_for_single_object (mi->event, 0)) {
+    /**
+     * `mi->event` was in signaled state (unlocked); we own the mutex now.
+     */
+    case WAIT_OBJECT_0:
+      break;
+    /**
+     * `mi->event` was in non-signaled state; some thread owns the mutex.
+     */
+    case WAIT_TIMEOUT:
+      /**
+       * If `mi` is recursive mutex and we own it, increment the lock count.
+       */
+      if (mi->type == Recursive && mi->owner == GetCurrentThreadId ()) {
+        mi->rec_lock++;
+        return 0;
+      }
+
+      return EBUSY;
+    default:
+      return EINVAL;
   }
+
+  if (mi->type != Normal) {
+    mi->owner = GetCurrentThreadId ();
+  }
+
+  return 0;
 }
 
 int pthread_mutex_init(pthread_mutex_t *m, const pthread_mutexattr_t *a)
@@ -376,7 +367,7 @@ int pthread_mutex_init(pthread_mutex_t *m, const pthread_mutexattr_t *a)
     return ENOMEM;
   }
 
-  mi->event = CreateEventW (NULL, FALSE, FALSE, NULL);
+  mi->event = CreateEventW (NULL, FALSE, TRUE, NULL);
 
   /**
    * The pthread_mutex_init() function shall fail if:
@@ -405,7 +396,6 @@ int pthread_mutex_init(pthread_mutex_t *m, const pthread_mutexattr_t *a)
   }
 
   mi->owner    = (DWORD)-1;
-  mi->state    = Unlocked;
   mi->rec_lock = 0;
 
   *m = (pthread_mutex_t)mi;
