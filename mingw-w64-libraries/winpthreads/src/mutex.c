@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2011, 2014 mingw-w64 project
+   Copyright (c) 2011, 2014, 2026 mingw-w64 project
    Copyright (c) 2015 Intel Corporation
 
    Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,8 +25,8 @@
 #include "config.h"
 #endif
 
-#include <malloc.h>
-#include <stdio.h>
+#include <limits.h>
+#include <stdlib.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -84,21 +84,516 @@
  * - pthread_mutexattr_setrobust()
  */
 
-typedef enum {
-  Normal,
-  Errorcheck,
-  Recursive,
-} mutex_type_t;
+/**
+ * Forward declaration; see definition below.
+ */
+typedef struct WinpthreadsMutex WinpthreadsMutex;
 
-/* The heap-allocated part of a mutex. */
+/**
+ * Mutex type-specific "init" routine.
+ */
+typedef int (* FuncMutexInit) (WinpthreadsMutex *, const pthread_mutexattr_t *);
+
+/**
+ * Mutex type-specific "destroy" routine.
+ */
+typedef void (* FuncMutexDestroy) (WinpthreadsMutex *);
+
+/**
+ * Mutex type-specific "lock" routine.
+ */
+typedef int (* FuncMutexLock) (WinpthreadsMutex *, DWORD);
+
+/**
+ * Mutex type-specific "try lock" routine.
+ *
+ * If second argument is `TRUE`, this function will only succeed if mutex is
+ * not owned by any thread, including the calling thread.
+ */
+typedef int (* FuncMutexTryLock) (WinpthreadsMutex *, BOOL);
+
+/**
+ * Mutex type-specific "unlock" routine.
+ */
+typedef int (* FuncMutexUnlock) (WinpthreadsMutex *);
+
+/**
+ * Implementation for specific Mutex type.
+ */
 typedef struct {
-  mutex_type_t type;
-  HANDLE event;       /* Auto-reset event. */
-  unsigned rec_lock;  /* For recursive mutexes, the number of times the
-                         mutex has been locked in excess by the same thread. */
-  volatile DWORD owner;  /* For recursive and error-checking mutexes, the
-                            ID of the owning thread if the mutex is locked. */
-} mutex_impl_t;
+  FuncMutexInit Init;
+  FuncMutexDestroy Destroy;
+  FuncMutexLock Lock;
+  FuncMutexTryLock TryLock;
+  FuncMutexUnlock Unlock;
+} WinpthreadsMutexImpl;
+
+#define THREAD_ID_NO_OWNER ((DWORD) -1)
+
+/**
+ * Data specific to Normal Mutex implementation.
+ */
+typedef struct {
+  /**
+   * Auto-reset event.
+   *
+   * Normal Mutexes are implemented using auto-reset events.
+   */
+  HANDLE Event;
+} WinpthreadsNormalMutex;
+
+/**
+ * Data specific to Error Checking Mutex implementation.
+ */
+typedef struct {
+  /**
+   * Auto-reset event.
+   *
+   * Error Checking Mutexes are implemented using auto-reset events.
+   */
+  HANDLE Event;
+  /**
+   * ID of the thread owning the mutex.
+   * If mutex has no owner, this field is set to `THREAD_ID_NO_OWNER`.
+   */
+  DWORD Owner;
+} WinpthreadsErrorCheckMutex;
+
+/**
+ * Data specific to Recursive Mutex implementation.
+ */
+typedef struct {
+  /**
+   * Auto-reset event.
+   *
+   * Recursive Mutexes are implemented using auto-reset events.
+   */
+  HANDLE Event;
+  /**
+   * ID of the thread owning the mutex.
+   * If mutex has no owner, this field is set to `THREAD_ID_NO_OWNER`.
+   */
+  DWORD Owner;
+  /**
+   * Recursive lock count.
+   *
+   * When a thread locks the mutex, this value is incremented by 1.
+   * When a thread unlocks the mutex, this value is decremented by 1.
+   *
+   * A thread owns the mutes as long as lock count is greater than zero;
+   * once lock count reaches zero, the owning thread releases the ownership of
+   * the mutex.
+   */
+  unsigned __int64 LockCount;
+} WinpthreadsRecursiveMutex;
+
+/**
+ * Structure pointed to by `pthread_mutex_t` objects.
+ */
+struct WinpthreadsMutex {
+  const WinpthreadsMutexImpl *Impl;
+  union {
+    /**
+     * `WinpthreadsNormalMutex` just contains an event `HANDLE`, so we simply
+     * store the whole structure without allocating heap storage for it.
+     */
+    WinpthreadsNormalMutex      Normal;
+    WinpthreadsErrorCheckMutex *ErrorCheck;
+    WinpthreadsRecursiveMutex  *Recursive;
+  } Mutex;
+};
+
+WINPTHREADS_STATIC_ASSERT (sizeof ((WinpthreadsMutex) {}.Mutex) == sizeof (void *), "");
+
+/*******************************************************************************
+ * Normal Mutex (PTHREAD_MUTEX_NORMAL) implementation.
+ *
+ * Normal Mutexes have the following properties:
+ *
+ * - Attempt to relock a mutex that is already owned by the calling thread
+ *   results in a dead lock.
+ * - Attempt to unlock a mutex that is not owned by the calling thread is UB.
+ * - Attempt to unlock an unlocked mutex is UB.
+ *
+ * Historically, in winpthreads, Normal Mutexes ignore ownership,
+ * which results in the following well-defined behavior:
+ *
+ * - Calls to `pthread_mutex_unlock` always succeed; and
+ * - A thread can unlock mutex owned by another thread.
+ */
+
+static int WinpthreadsNormalMutexInit (WinpthreadsMutex *wMutex, const pthread_mutexattr_t *attr) {
+  WinpthreadsNormalMutex *mutex = &wMutex->Mutex.Normal;
+
+  mutex->Event = CreateEventW (NULL, FALSE, TRUE, NULL);
+
+  if (mutex->Event == NULL) {
+    return EAGAIN;
+  }
+
+  return 0;
+  UNREFERENCED_PARAMETER (attr);
+}
+
+static void WinpthreadsNormalMutexDestroy (WinpthreadsMutex *wMutex) {
+  WinpthreadsNormalMutex *mutex = &wMutex->Mutex.Normal;
+
+  HANDLE event = InterlockedExchangePointer ((void **) &mutex->Event, NULL);
+
+  if (event != NULL) {
+    CloseHandle (event);
+  }
+}
+
+static int WinpthreadsNormalMutexLock (WinpthreadsMutex *wMutex, DWORD timeout) {
+  WinpthreadsNormalMutex *mutex = &wMutex->Mutex.Normal;
+
+  switch (_pthread_wait_for_single_object (mutex->Event, timeout)) {
+    /**
+     * `mutex->Event` was in signaled state (unlocked) or it became signaled
+     * within `timeout`; the calling thread owns the mutex now.
+     */
+    case WAIT_OBJECT_0:
+      break;
+    /**
+     * `mutex->Event` was not signaled (unlocked) before `timeout` expired.
+     */
+    case WAIT_TIMEOUT:
+      return ETIMEDOUT;
+    default:
+      return EINVAL;
+  }
+
+  return 0;
+}
+
+static int WinpthreadsNormalMutexTryLock (WinpthreadsMutex *wMutex, BOOL exclusiveLock) {
+  WinpthreadsNormalMutex *mutex = &wMutex->Mutex.Normal;
+
+  switch (_pthread_wait_for_single_object (mutex->Event, 0)) {
+    /**
+     * `mutex->Event` was in signaled state (unlocked); the calling thread owns
+     * the mutex now.
+     */
+    case WAIT_OBJECT_0:
+      break;
+    /**
+     * `mutex->Event` was in non-signaled state; some thread owns the mutex.
+     */
+    case WAIT_TIMEOUT:
+      return EBUSY;
+    default:
+      return EINVAL;
+  }
+
+  return 0;
+  UNREFERENCED_PARAMETER (exclusiveLock);
+}
+
+static int WinpthreadsNormalMutexUnlock (WinpthreadsMutex *wMutex) {
+  WinpthreadsNormalMutex *mutex = &wMutex->Mutex.Normal;
+
+  if (!SetEvent (mutex->Event)) {
+    return EINVAL;
+  }
+
+  return 0;
+}
+
+static const WinpthreadsMutexImpl WinpthreadsNormalMutexImpl = {
+  .Init    = WinpthreadsNormalMutexInit,
+  .Destroy = WinpthreadsNormalMutexDestroy,
+  .Lock    = WinpthreadsNormalMutexLock,
+  .TryLock = WinpthreadsNormalMutexTryLock,
+  .Unlock  = WinpthreadsNormalMutexUnlock,
+};
+
+/*******************************************************************************
+ * Error Checking Mutex (PTHREAD_MUTEX_ERRORCHECK) implementation.
+ *
+ * Error Checking Mutexes have the following properties:
+ *
+ * - Attempt to relock a mutex that is already owned by the calling thread
+ *   fails with EDEADLK.
+ * - Attempt to unlock a mutex that is not owned by the calling thread fails
+ *   with EPERM.
+ * - Attempt to unlock an unlocked mutex fails with EPERM.
+ */
+
+static int WinpthreadsErrorCheckMutexInit (WinpthreadsMutex *wMutex, const pthread_mutexattr_t *attr) {
+  WinpthreadsErrorCheckMutex *mutex = malloc (sizeof (WinpthreadsErrorCheckMutex));
+
+  if (mutex == NULL) {
+    return ENOMEM;
+  }
+
+  mutex->Event = CreateEventW (NULL, FALSE, TRUE, NULL);
+
+  if (mutex->Event == NULL) {
+    free (mutex);
+    return EAGAIN;
+  }
+
+  mutex->Owner = THREAD_ID_NO_OWNER;
+  wMutex->Mutex.ErrorCheck = mutex;
+
+  return 0;
+  UNREFERENCED_PARAMETER (attr);
+}
+
+static void WinpthreadsErrorCheckMutexDestroy (WinpthreadsMutex *wMutex) {
+  WinpthreadsErrorCheckMutex *mutex = InterlockedExchangePointer ((void **) &wMutex->Mutex.ErrorCheck, NULL);
+
+  if (mutex != NULL) {
+    HANDLE event = InterlockedExchangePointer ((void **) &mutex->Event, NULL);
+
+    if (event != NULL) {
+      CloseHandle (mutex->Event);
+    }
+
+    free (mutex);
+  }
+}
+
+static int WinpthreadsErrorCheckMutexLock (WinpthreadsMutex *wMutex, DWORD timeout) {
+  WinpthreadsErrorCheckMutex *mutex = wMutex->Mutex.ErrorCheck;
+
+  DWORD threadId = GetCurrentThreadId ();
+
+  if (mutex->Owner == threadId) {
+    return EDEADLK;
+  }
+
+  switch (_pthread_wait_for_single_object (mutex->Event, timeout)) {
+    /**
+     * `mutex->Event` was in signaled state (unlocked) or it became signaled
+     * within `timeout`; the calling thread owns the mutex now.
+     */
+    case WAIT_OBJECT_0:
+      break;
+    /**
+     * `mutex->Event` was not signaled (unlocked) before `timeout` expired.
+     */
+    case WAIT_TIMEOUT:
+      return ETIMEDOUT;
+    default:
+      return EINVAL;
+  }
+
+  mutex->Owner = threadId;
+
+  return 0;
+}
+
+static int WinpthreadsErrorCheckMutexTryLock (WinpthreadsMutex *wMutex, BOOL exclusiveLock) {
+  WinpthreadsErrorCheckMutex *mutex = wMutex->Mutex.ErrorCheck;
+
+  switch (_pthread_wait_for_single_object (mutex->Event, 0)) {
+    /**
+     * `mutex->Event` was in signaled state (unlocked); the calling thread owns
+     * the mutex now.
+     */
+    case WAIT_OBJECT_0:
+      break;
+    /**
+     * `mutex->Event` was in non-signaled state; some thread owns the mutex.
+     */
+    case WAIT_TIMEOUT:
+      return EBUSY;
+    default:
+      return EINVAL;
+  }
+
+  mutex->Owner = GetCurrentThreadId ();
+
+  return 0;
+  UNREFERENCED_PARAMETER (exclusiveLock);
+}
+
+static int WinpthreadsErrorCheckMutexUnlock (WinpthreadsMutex *wMutex) {
+  WinpthreadsErrorCheckMutex *mutex = wMutex->Mutex.ErrorCheck;
+
+  LONG threadId = (LONG) GetCurrentThreadId ();
+
+  if (InterlockedCompareExchange ((LONG *) &mutex->Owner, (LONG) THREAD_ID_NO_OWNER, threadId) != threadId) {
+    return EPERM;
+  }
+
+  if (!SetEvent (mutex->Event)) {
+    return EINVAL;
+  }
+
+  return 0;
+}
+
+static const WinpthreadsMutexImpl WinpthreadsErrorCheckMutexImpl = {
+  .Init    = WinpthreadsErrorCheckMutexInit,
+  .Destroy = WinpthreadsErrorCheckMutexDestroy,
+  .Lock    = WinpthreadsErrorCheckMutexLock,
+  .TryLock = WinpthreadsErrorCheckMutexTryLock,
+  .Unlock  = WinpthreadsErrorCheckMutexUnlock,
+};
+
+/*******************************************************************************
+ * Recursive Mutex (PTHREAD_MUTEX_RECURSIVE) implementation.
+ *
+ * Recursive Mutexes have the following properties:
+ *
+ * - Attempt to relock a mutex that is already owned by the calling thread
+ *   succeeds and increases recursive lock count.
+ * - Attempt to unlock a mutex that is not owned by the calling thread fails
+ *   with EPERM.
+ * - Attempt to unlock an unlocked mutex fails with EPERM.
+ */
+
+static int WinpthreadsRecursiveMutexInit (WinpthreadsMutex *wMutex, const pthread_mutexattr_t *attr) {
+  WinpthreadsRecursiveMutex *mutex = malloc (sizeof (WinpthreadsRecursiveMutex));
+
+  if (mutex == NULL) {
+    return ENOMEM;
+  }
+
+  mutex->Event = CreateEventW (NULL, FALSE, TRUE, NULL);
+
+  if (mutex->Event == NULL) {
+    free (mutex);
+    return EAGAIN;
+  }
+
+  mutex->Owner     = THREAD_ID_NO_OWNER;
+  mutex->LockCount = 0;
+
+  wMutex->Mutex.Recursive = mutex;
+
+  return 0;
+  UNREFERENCED_PARAMETER (attr);
+}
+
+static void WinpthreadsRecursiveMutexDestroy (WinpthreadsMutex *wMutex) {
+  WinpthreadsRecursiveMutex *mutex = InterlockedExchangePointer ((void **) &wMutex->Mutex.Recursive, NULL);
+
+  if (mutex != NULL) {
+    HANDLE event = InterlockedExchangePointer ((void **) &mutex->Event, NULL);
+
+    if (event != NULL) {
+      CloseHandle (mutex->Event);
+    }
+
+    free (mutex);
+  }
+}
+
+static int WinpthreadsRecursiveMutexLock (WinpthreadsMutex *wMutex, DWORD timeout) {
+  WinpthreadsRecursiveMutex *mutex = wMutex->Mutex.Recursive;
+
+  DWORD threadId = GetCurrentThreadId ();
+
+  if (mutex->Owner == threadId) {
+    if (unlikely (mutex->LockCount == _UI64_MAX)) {
+      return EAGAIN;
+    }
+
+    mutex->LockCount++;
+    return 0;
+  }
+
+  switch (_pthread_wait_for_single_object (mutex->Event, timeout)) {
+    /**
+     * `mutex->Event` was in signaled state (unlocked) or it became signaled
+     * within `timeout`; the calling thread owns the mutex now.
+     */
+    case WAIT_OBJECT_0:
+      break;
+    /**
+     * `mutex->Event` was not signaled (unlocked) before `timeout` expired.
+     */
+    case WAIT_TIMEOUT:
+      return ETIMEDOUT;
+    default:
+      return EINVAL;
+  }
+
+  mutex->LockCount += 1;
+  mutex->Owner      = threadId;
+
+  return 0;
+}
+
+static int WinpthreadsRecursiveMutexTryLock (WinpthreadsMutex *wMutex, BOOL exclusiveLock) {
+  WinpthreadsRecursiveMutex *mutex = wMutex->Mutex.Recursive;
+
+  DWORD threadId = GetCurrentThreadId ();
+
+  if (mutex->Owner == threadId) {
+    if (unlikely (exclusiveLock)) {
+      return EBUSY;
+    }
+
+    if (unlikely (mutex->LockCount == _UI64_MAX)) {
+      return EAGAIN;
+    }
+
+    mutex->LockCount++;
+    return 0;
+  }
+
+  switch (_pthread_wait_for_single_object (mutex->Event, 0)) {
+    /**
+     * `mutex->Event` was in signaled state (unlocked); the calling thread owns
+     * the mutex now.
+     */
+    case WAIT_OBJECT_0:
+      break;
+    /**
+     * `mutex->Event` was in non-signaled state; some thread owns the mutex.
+     */
+    case WAIT_TIMEOUT:
+      return EBUSY;
+    default:
+      return EINVAL;
+  }
+
+  mutex->LockCount += 1;
+  mutex->Owner      = threadId;
+
+  return 0;
+}
+
+static int WinpthreadsRecursiveMutexUnlock (WinpthreadsMutex *wMutex) {
+  WinpthreadsRecursiveMutex *mutex = wMutex->Mutex.Recursive;
+
+  DWORD threadId = GetCurrentThreadId ();
+
+  if (mutex->Owner != threadId) {
+    return EPERM;
+  }
+
+  mutex->LockCount--;
+
+  if (mutex->LockCount > 0) {
+    return 0;
+  }
+
+  mutex->Owner = THREAD_ID_NO_OWNER;
+
+  if (!SetEvent (mutex->Event)) {
+    return EINVAL;
+  }
+
+  return 0;
+}
+
+static const WinpthreadsMutexImpl WinpthreadsRecursiveMutexImpl = {
+  .Init    = WinpthreadsRecursiveMutexInit,
+  .Destroy = WinpthreadsRecursiveMutexDestroy,
+  .Lock    = WinpthreadsRecursiveMutexLock,
+  .TryLock = WinpthreadsRecursiveMutexTryLock,
+  .Unlock  = WinpthreadsRecursiveMutexUnlock,
+};
+
+/*******************************************************************************
+ * Implementation for public `pthread_mutex_*` functions.
+ */
 
 /**
  * Evaluates to non-zero if `m` is a static initializer for `pthread_mutex_t`:
@@ -111,34 +606,34 @@ typedef struct {
 #define STATIC_MUTEX_INITIALIZER(m) ((uintptr_t)(m) >= (uintptr_t)-3)
 
 /**
- * Obtain pointer to `mutex_impl_t` structure pointed to by `m`.
+ * Obtain pointer to `WinpthreadsMutex` structure pointed to by `m`.
  *
  * If `m` points to statically initialzied `pthread_mutex_t` object,
- * allocate `mutex_impl_t` structure and store its address in `*m`.
+ * allocate `WinpthreadsMutex` structure and store its address in `*m`.
  *
- * On success, stores pointer to `mutex_impl_t` structure in `*mi`.
+ * On success, stores pointer to `WinpthreadsMutex` structure in `*wMutex`.
  *
  * Returns zero on success and an error-code on failure.
  */
-static WINPTHREADS_INLINE int mutex_impl(pthread_mutex_t *m, mutex_impl_t **mi)
+static WINPTHREADS_INLINE int WinpthreadsMutexGet(pthread_mutex_t *m, WinpthreadsMutex **wMutex)
 {
-  *mi = (mutex_impl_t *)*m;
+  *wMutex = (WinpthreadsMutex *)*m;
 
   /**
    * We need to avoid race condition when more than one thread attempts to use
    * same statically initialized `pthread_mutex_t` object at the same time.
    *
-   * Store newly initialized mutex in `mi`, which is a local variable supplied
-   * by the caller, and only then store it in `m`.
+   * Store newly initialized mutex in `wMutex`, which is a local variable
+   * supplied by the caller, and only then store it in `m`.
    *
    * If some other thread was faster then us, destroy newly created mutex
    * and use mutex pointed to by `m`.
    */
-  if (unlikely (STATIC_MUTEX_INITIALIZER (*mi))) {
+  if (unlikely (STATIC_MUTEX_INITIALIZER (*wMutex))) {
     pthread_mutexattr_t mutexAttr;
     int mutexType;
 
-    mutex_impl_t *volatile initializer = *mi;
+    WinpthreadsMutex *volatile initializer = *wMutex;
 
     switch ((pthread_mutex_t)initializer) {
       case PTHREAD_NORMAL_MUTEX_INITIALIZER:
@@ -161,77 +656,84 @@ static WINPTHREADS_INLINE int mutex_impl(pthread_mutex_t *m, mutex_impl_t **mi)
     }
 
     pthread_mutexattr_settype (&mutexAttr, mutexType);
-    error_code = pthread_mutex_init ((pthread_mutex_t *)mi, &mutexAttr);
+    error_code = pthread_mutex_init ((pthread_mutex_t *)wMutex, &mutexAttr);
     pthread_mutexattr_destroy (&mutexAttr);
 
     if (error_code) {
       return error_code;
     }
 
-    void *mutex = InterlockedCompareExchangePointer ((void **)m, *mi, initializer);
+    void *mutex = InterlockedCompareExchangePointer ((void **)m, *wMutex, initializer);
 
     /**
      * Some other thread was faster than us.
      */
     if (unlikely (mutex != initializer)) {
-      pthread_mutex_destroy ((pthread_mutex_t *)mi);
-      *mi = mutex;
+      pthread_mutex_destroy ((pthread_mutex_t *)wMutex);
+      *wMutex = mutex;
     }
   }
 
-  if (unlikely (*mi == NULL)) {
+  if (unlikely (*wMutex == NULL)) {
     return EINVAL;
   }
 
   return 0;
 }
 
-/* Lock a mutex. Give up after 'timeout' ms (with ETIMEDOUT),
-   or never if timeout=INFINITE. */
-static WINPTHREADS_INLINE int pthread_mutex_lock_intern(pthread_mutex_t *m, DWORD timeout)
+int pthread_mutex_lock(pthread_mutex_t *m)
 {
-  mutex_impl_t *mi = NULL;
+  WinpthreadsMutex *wMutex = NULL;
 
-  int error_code = mutex_impl (m, &mi);
+  int error_code = WinpthreadsMutexGet (m, &wMutex);
 
   if (error_code) {
     return error_code;
   }
 
-  /* Recursive or Errorcheck */
-  if (mi->type != Normal) {
-    if (mi->owner == GetCurrentThreadId()) {
-      if (mi->type == Recursive) {
-        mi->rec_lock++;
-        return 0;
-      }
-
-      return EDEADLK;
-    }
-  }
-
-  switch (_pthread_wait_for_single_object(mi->event, timeout)) {
-    case WAIT_TIMEOUT:
-      return ETIMEDOUT;
-    case WAIT_OBJECT_0:
-      break;
-    default:
-      return EINVAL;
-  }
-
-  if (mi->type != Normal)
-    mi->owner = GetCurrentThreadId();
-
-  return 0;
-}
-
-int pthread_mutex_lock(pthread_mutex_t *m)
-{
-  return pthread_mutex_lock_intern (m, INFINITE);
+  return wMutex->Impl->Lock (wMutex, INFINITE);
 }
 
 int pthread_mutex_timedlock64(pthread_mutex_t *m, const struct _timespec64 *ts)
 {
+  WinpthreadsMutex *wMutex = NULL;
+
+  int error_code = WinpthreadsMutexGet (m, &wMutex);
+
+  if (error_code) {
+    return error_code;
+  }
+
+  /**
+   * POSIX:
+   *
+   * Under no circumstance shall the function fail with a timeout if the mutex
+   * can be locked immediately. The validity of the abstime parameter need
+   * not be checked if the mutex can be locked immediately.
+   */
+  error_code = wMutex->Impl->TryLock (wMutex, FALSE);
+
+  switch (error_code) {
+    /**
+     * Some thread owns the mutex.
+     */
+    case EBUSY:
+      break;
+    /**
+     * Recursive lock count limit has been reached.
+     */
+    case EAGAIN:
+    /**
+     * The calling thread owns the mutex now.
+     */
+    case 0:
+    /**
+     * An unexpected error has occured.
+     */
+    default:
+      return error_code;
+  }
+
   /**
    * The pthread_mutex_timedlock() function shall fail if:
    *
@@ -252,7 +754,7 @@ int pthread_mutex_timedlock64(pthread_mutex_t *m, const struct _timespec64 *ts)
     patience = INFINITE;
   }
 
-  return pthread_mutex_lock_intern(m, (DWORD) patience);
+  return wMutex->Impl->Lock (wMutex, (DWORD) patience);
 }
 
 int pthread_mutex_timedlock32(pthread_mutex_t *m, const struct _timespec32 *ts)
@@ -263,69 +765,28 @@ int pthread_mutex_timedlock32(pthread_mutex_t *m, const struct _timespec32 *ts)
 
 int pthread_mutex_unlock(pthread_mutex_t *m)
 {
-  mutex_impl_t *mi = NULL;
+  WinpthreadsMutex *wMutex = NULL;
 
-  int error_code = mutex_impl (m, &mi);
+  int error_code = WinpthreadsMutexGet (m, &wMutex);
 
   if (error_code) {
     return error_code;
   }
 
-  if (unlikely(mi->type != Normal)) {
-    if (mi->owner != GetCurrentThreadId())
-      return EPERM;
-    if (mi->rec_lock > 0) {
-      mi->rec_lock--;
-      return 0;
-    }
-    mi->owner = (DWORD)-1;
-  }
-
-  if (!SetEvent(mi->event)) {
-    return EINVAL;
-  }
-
-  return 0;
+  return wMutex->Impl->Unlock (wMutex);
 }
 
 int pthread_mutex_trylock(pthread_mutex_t *m)
 {
-  mutex_impl_t *mi = NULL;
+  WinpthreadsMutex *wMutex = NULL;
 
-  int error_code = mutex_impl (m, &mi);
+  int error_code = WinpthreadsMutexGet (m, &wMutex);
 
   if (error_code) {
     return error_code;
   }
 
-  switch (_pthread_wait_for_single_object (mi->event, 0)) {
-    /**
-     * `mi->event` was in signaled state (unlocked); we own the mutex now.
-     */
-    case WAIT_OBJECT_0:
-      break;
-    /**
-     * `mi->event` was in non-signaled state; some thread owns the mutex.
-     */
-    case WAIT_TIMEOUT:
-      /**
-       * If `mi` is recursive mutex and we own it, increment the lock count.
-       */
-      if (mi->type == Recursive && mi->owner == GetCurrentThreadId ()) {
-        mi->rec_lock++;
-        return 0;
-      }
-
-      return EBUSY;
-    default:
-      return EINVAL;
-  }
-
-  if (mi->type != Normal) {
-    mi->owner = GetCurrentThreadId ();
-  }
-
-  return 0;
+  return wMutex->Impl->TryLock (wMutex, FALSE);
 }
 
 int pthread_mutex_init(pthread_mutex_t *m, const pthread_mutexattr_t *a)
@@ -355,7 +816,7 @@ int pthread_mutex_init(pthread_mutex_t *m, const pthread_mutexattr_t *a)
     }
   }
 
-  mutex_impl_t *mi = calloc (1, sizeof (mutex_impl_t));
+  WinpthreadsMutex *wMutex = calloc (1, sizeof (WinpthreadsMutex));
 
   /**
    * The pthread_mutex_init() function shall fail if:
@@ -363,42 +824,32 @@ int pthread_mutex_init(pthread_mutex_t *m, const pthread_mutexattr_t *a)
    * [ENOMEM]
    *   Insufficient memory exists to initialize the mutex.
    */
-  if (mi == NULL) {
+  if (wMutex == NULL) {
     return ENOMEM;
-  }
-
-  mi->event = CreateEventW (NULL, FALSE, TRUE, NULL);
-
-  /**
-   * The pthread_mutex_init() function shall fail if:
-   *
-   * [EAGAIN]
-   *   The system lacked the necessary resources (other than memory) to
-   *   initialize another mutex.
-   */
-  if (mi->event == NULL) {
-    free (mi);
-    return EAGAIN;
   }
 
   switch (type) {
     case PTHREAD_MUTEX_RECURSIVE:
-      mi->type = Recursive;
+      wMutex->Impl = &WinpthreadsRecursiveMutexImpl;
       break;
     case PTHREAD_MUTEX_ERRORCHECK:
-      mi->type = Errorcheck;
+      wMutex->Impl = &WinpthreadsErrorCheckMutexImpl;
       break;
     case PTHREAD_MUTEX_NORMAL:
-      mi->type = Normal;
+      wMutex->Impl = &WinpthreadsNormalMutexImpl;
       break;
     default:
       UNREACHABLE ();
   }
 
-  mi->owner    = (DWORD)-1;
-  mi->rec_lock = 0;
+  int error_code = wMutex->Impl->Init (wMutex, a);
 
-  *m = (pthread_mutex_t)mi;
+  if (error_code) {
+    free (wMutex);
+    return error_code;
+  }
+
+  *m = (pthread_mutex_t)wMutex;
 
   return 0;
 }
@@ -416,9 +867,9 @@ int pthread_mutex_destroy(pthread_mutex_t *m)
     return EINVAL;
   }
 
-  mutex_impl_t *mi = (mutex_impl_t *)*m;
+  WinpthreadsMutex *wMutex = (WinpthreadsMutex *)*m;
 
-  if (unlikely (mi == NULL)) {
+  if (unlikely (wMutex == NULL)) {
     return EINVAL;
   }
 
@@ -426,42 +877,26 @@ int pthread_mutex_destroy(pthread_mutex_t *m)
    * If `m` points to a static initializer, attempt to immediately invalidate
    * it in order to reduce window for other functions to attempt using it.
    */
-  if (unlikely (STATIC_MUTEX_INITIALIZER (mi))) {
-    mutex_impl_t *mutex = InterlockedCompareExchangePointer ((void **)m, NULL, mi);
+  if (unlikely (STATIC_MUTEX_INITIALIZER (wMutex))) {
+    WinpthreadsMutex *mutex = InterlockedCompareExchangePointer ((void **)m, NULL, wMutex);
 
-    if (likely (mutex == mi) || unlikely (mutex == NULL)) {
+    if (likely (mutex == wMutex) || unlikely (mutex == NULL)) {
       return 0;
     }
 
-    mi = mutex;
+    wMutex = mutex;
   }
 
-  switch (_pthread_wait_for_single_object (mi->event, 0)) {
-    /**
-     * `mi->event` was in signaled state (unlocked); we own the mutex now.
-     */
-    case WAIT_OBJECT_0:
-      break;
-    /**
-     * `mi->event` was in non-signaled state; some thread owns the mutex.
-     *
-     * POSIX:
-     *
-     * If an implementation detects that the value specified by the mutex
-     * argument to pthread_mutex_destroy() refers to a locked mutex or a mutex
-     * that is referenced, it is recommended that the function should fail and
-     * report an [EBUSY] error.
-     */
-    case WAIT_TIMEOUT:
-      return EBUSY;
-    default:
-      return EINVAL;
+  int error_code = wMutex->Impl->TryLock (wMutex, TRUE);
+
+  if (error_code) {
+    return error_code;
   }
 
   InterlockedExchangePointer ((void **)m, NULL);
 
-  CloseHandle (mi->event);
-  free (mi);
+  wMutex->Impl->Destroy (wMutex);
+  free (wMutex);
 
   return 0;
 }
