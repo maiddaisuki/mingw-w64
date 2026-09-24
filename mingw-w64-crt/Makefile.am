@@ -564,6 +564,7 @@ src_ucrtbase64=\
 
 # Files included in libucrt*.a on arm32
 src_ucrtbasearm32=\
+  misc/ucrt_arm32__setjmpex.c \
   $(src_ucrtbase)
 
 # Files included in libucrt*.a on arm64
