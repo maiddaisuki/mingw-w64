@@ -180,6 +180,8 @@ int main(int argc, char **argv)
   return 77;
 #endif
 
+  int exit_code = 0;
+
   outer_unwind_called = 0;
   target_unwind_called = 0;
   inner_unwind_called = 0;
@@ -189,7 +191,7 @@ int main(int argc, char **argv)
 
   if (outer_unwind_called != 0) {
     printf("ERROR: Outer SEH unwind handler was called\n");
-    return 1;
+    exit_code = 1;
   }
 
   printf("OK: Outer SEH unwind handler was not called\n");
@@ -198,7 +200,7 @@ int main(int argc, char **argv)
   /* i386 fs:0 based SEH does not call the last (target) handler */
   if (target_unwind_called != 0) {
     printf("ERROR: Target SEH unwind handler was called\n");
-    return 1;
+    exit_code = 1;
   }
 
   printf("OK: Target SEH unwind handler was not called\n");
@@ -206,12 +208,12 @@ int main(int argc, char **argv)
   /* non-i386 .pdata based SEH always calls the last target handler with the EXCEPTION_TARGET_UNWIND flag */
   if (target_unwind_called == 0) {
     printf("ERROR: Target SEH unwind handler was not called\n");
-    return 1;
+    exit_code = 1;
   }
 
   if (target_unwind_called != 1) {
     printf("ERROR: Target SEH unwind handler was called more times (%d)\n", target_unwind_called);
-    return 1;
+    exit_code = 1;
   }
 
   printf("OK: Target SEH unwind handler was called exactly once\n");
@@ -219,15 +221,15 @@ int main(int argc, char **argv)
 
   if (inner_unwind_called == 0) {
     printf("ERROR: Inner SEH unwind handler was not called\n");
-    return 1;
+    exit_code = 1;
   }
 
   if (inner_unwind_called != 1) {
     printf("ERROR: Inner SEH unwind handler was called more times (%d)\n", inner_unwind_called);
-    return 1;
+    exit_code = 1;
   }
 
   printf("OK: Inner SEH unwind handler was called exactly once\n");
 
-  return 0;
+  return exit_code;
 }
