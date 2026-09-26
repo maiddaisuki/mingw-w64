@@ -13,7 +13,7 @@
 #define SEH_INLINE_ASM
 #ifdef __arm__
 #define ASM_SEH_UNWIND "%%unwind"
-#elif defined(__aarch64__)
+#elif defined(__aarch64__) || defined(__arm64ec__)
 #define ASM_SEH_UNWIND "@unwind, @except"
 #else
 #define ASM_SEH_UNWIND "@unwind"
