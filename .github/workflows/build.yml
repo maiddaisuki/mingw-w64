@@ -685,6 +685,7 @@ jobs:
           export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) check -k -O --no-print-directory || { cat testcases/test-suite.log; exit 1; }
+          cat testcases/t_longjmp_unwind.log || :
       - name: Build winpthreads and tests
         run: |
           export PATH=/llvm-mingw/bin:$PATH
