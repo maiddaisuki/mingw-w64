@@ -210,13 +210,6 @@ int main(int argc, char **argv)
 #endif
 #endif
 
-#ifdef TEST_NOUNWIND
-#if defined(__i386__)
-  printf("SKIP: __USE_MINGW_SETJMP_NON_SEH is broken on i386\n");
-  return 77;
-#endif
-#endif
-
   outer_unwind_called = 0;
   target_unwind_called = 0;
   inner_unwind_called = 0;
