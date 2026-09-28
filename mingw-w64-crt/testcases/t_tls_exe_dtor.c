@@ -11,11 +11,30 @@
 /* mingw-w64 headers */
 #include "libtest.h"
 
-static int thread_detach = 0;
+extern int __cdecl __tlregdtor(void (__cdecl*func)(void));
 
-static void __cdecl dtor_tls_callback(void)
+/* Tentative symbol __mingw_register_thread_local_exe_atexit_callback_ptr is
+ * mingw-w64 internal symbol only for EXE applications. It is non-NULL if the
+ * EXE application is using __tlregdtor.
+ */
+void (__cdecl *const __mingw_register_thread_local_exe_atexit_callback_ptr)(void) __attribute__((common)); /* tentative */
+
+static int thread_dtor_counter = 0;
+static int process_dtor_counter = 0;
+
+static void __cdecl thread_dtor_callback(void)
 {
-  thread_detach++;
+  thread_dtor_counter++;
+}
+
+static void __cdecl process_dtor_callback(void)
+{
+  if (process_dtor_counter != 0) {
+    printf("Error after main: dtor TLS callback on main process thread was called more times\n");
+    /* exit, _exit, or ExitProcess calls TLS callbacks, so use TerminateProcess() which is not calling them */
+    TerminateProcess(GetCurrentProcess(), 1);
+  }
+  process_dtor_counter++;
 }
 
 #if defined(__i386__)
@@ -24,10 +43,11 @@ __attribute__((force_align_arg_pointer))
 #endif
 static DWORD WINAPI thread_main(LPVOID user_data __attribute__((unused)))
 {
-  /* Register dtor_tls_callback as oneshot dtor TLS callback */
-  extern int __cdecl __tlregdtor(void (__cdecl*func)(void));
-  if (__tlregdtor(&dtor_tls_callback) != 0)
-    printf("Error: __tlregdtor() failed\n");
+  /* Register thread_dtor_callback as oneshot dtor TLS callback */
+  if (__tlregdtor(&thread_dtor_callback) != 0) {
+    printf("Error: __tlregdtor() on second thread failed\n");
+    return 1;
+  }
   return 0;
 }
 
@@ -55,11 +75,22 @@ int main(void)
     printf("PE TLS section is present\n");
   }
 
+  if (!__mingw_register_thread_local_exe_atexit_callback_ptr) {
+    printf("Error: __mingw_register_thread_local_exe_atexit_callback_ptr is NULL\n");
+    ret = 1;
+  }
+
   if (_osplatform == VER_PLATFORM_WIN32_WINDOWS) {
     printf("PE TLS callbacks are not supported on Win9x\n");
     if (ret)
       return ret;
     return 77;
+  }
+
+  /* Register process_dtor_callback as oneshot dtor TLS callback */
+  if (__tlregdtor(&process_dtor_callback) != 0) {
+    printf("Error: __tlregdtor() on main process thread failed\n");
+    ret = 1;
   }
 
   printf("Creating new thread\n");
@@ -81,12 +112,17 @@ int main(void)
       ret = 1;
     }
 
-    if (thread_detach != 1) {
-      printf("Error: dtor TLS callback for DLL_THREAD_DETACH was not called\n");
+    if (thread_dtor_counter != 1) {
+      printf("Error: dtor TLS callback on second thread was not called\n");
       ret = 1;
     } else {
-      printf("dtor TLS callback for DLL_THREAD_DETACH was called\n");
+      printf("dtor TLS callback on second thread was called\n");
     }
+  }
+
+  if (process_dtor_counter != 0) {
+    printf("Error: dtor TLS callback on main process thread was called before exiting process\n");
+    ret = 1;
   }
 
   if (ret) printf("FAILED\n"); else printf("PASSED\n");

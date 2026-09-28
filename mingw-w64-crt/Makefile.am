@@ -128,6 +128,7 @@ src_libmingw32=include/internal.h include/sect_attribs.h crt/seh_signal_dispatch
   crt/usermatherr.c   \
   crt/xtxtmode.c      \
   crt/crtdll_atexit_register.c \
+  crt/tls_exe_atexit_callback.c \
   crt/tlsdyn.c        crt/tlsdtor.c        \
   crt/tlsthrd_register.c crt/tls_atexit_register.c \
   crt/tlsthrd.c       crt/tlsmthread.c     crt/tlsmcrt.c   \
@@ -182,6 +183,7 @@ src_msvcrt_common=\
   misc/__mingw_mbrtowc_cp.c \
   misc/__mingw_wcrtomb_cp.c \
   misc/_onexit.c \
+  misc/exit.c \
   misc/mbrlen.c \
   misc/mbrtowc.c \
   misc/mbsinit.c \

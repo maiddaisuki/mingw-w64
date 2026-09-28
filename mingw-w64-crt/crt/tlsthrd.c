@@ -136,8 +136,7 @@ __mingwthr_remove_all_key_dtors (void)
   LeaveCriticalSection (&__mingwthr_cs);
 }
 
-void WINAPI __mingw_TLScallback(HANDLE, DWORD, LPVOID);
-void WINAPI
+static void WINAPI
 __mingw_TLScallback (HANDLE __UNUSED_PARAM(hDllHandle),
 		     DWORD reason,
 		     LPVOID __UNUSED_PARAM(reserved))
@@ -167,8 +166,8 @@ __mingw_TLScallback (HANDLE __UNUSED_PARAM(hDllHandle),
       break;
     }
 }
-void (WINAPI *const __mingw_TLScallback_ptr)(HANDLE,DWORD,LPVOID) = __mingw_TLScallback;
+void (WINAPI *const __w64_mingwthr_callback_ptr)(HANDLE,DWORD,LPVOID) = __mingw_TLScallback;
 
-/* Force inclusion of code which calls __mingw_TLScallback */
-extern const int __mingw_TLScallback_caller_provider;
-static __attribute__ ((used)) const void *const _include_mingw_TLScallback_caller = &__mingw_TLScallback_caller_provider;
+/* Force inclusion of code which calls __w64_mingwthr_callback_ptr */
+extern const int __w64_mingwthr_callback_caller_provider;
+static __attribute__ ((used)) const void *const _include_w64_mingwthr_callback_caller = &__w64_mingwthr_callback_caller_provider;
