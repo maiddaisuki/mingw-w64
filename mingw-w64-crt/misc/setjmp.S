@@ -123,7 +123,6 @@ __MINGW_LSYMBOL(setjmp_common):
 __MINGW_USYMBOL(setjmp):
 __MINGW_USYMBOL(__intrinsic_setjmp):
 __MINGW_USYMBOL(_setjmp):
-        xorq    %rdx,%rdx
 __MINGW_USYMBOL(__intrinsic_setjmpex):
 __MINGW_USYMBOL(_setjmpex):
         movq    %rdx,(%rcx)          /* jmp_buf->Frame */
@@ -157,7 +156,6 @@ __MINGW_USYMBOL(_setjmpex):
 #elif defined(__arm__)
 __MINGW_USYMBOL(__intrinsic_setjmp):
 __MINGW_USYMBOL(_setjmp):
-        mov     r1,  #0
 __MINGW_USYMBOL(__intrinsic_setjmpex):
 __MINGW_USYMBOL(_setjmpex):
         str     r1,  [r0]            /* jmp_buf->Frame */
