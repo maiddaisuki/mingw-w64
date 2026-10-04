@@ -173,7 +173,16 @@ src_libws2_32=libsrc/ws2_32.c \
   libsrc/wspiapi/WspiapiLoad.c               libsrc/wspiapi/WspiapiGetAddrInfo.c       libsrc/wspiapi/WspiapiGetNameInfo.c        \
   libsrc/wspiapi/WspiapiFreeAddrInfo.c
 
-src_c11_threads=
+src_c11_threads=\
+  threads/_thrd_sleep32.c \
+  threads/_thrd_sleep64.c \
+  threads/thrd_create.c \
+  threads/thrd_current.c \
+  threads/thrd_detach.c \
+  threads/thrd_equal.c \
+  threads/thrd_exit.c \
+  threads/thrd_join.c \
+  threads/thrd_yield.c
 
 # Files included in all libmsvcr*.a
 src_msvcrt_common=\
