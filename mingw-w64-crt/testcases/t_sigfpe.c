@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <threads.h>
 
 #ifdef _WIN32
 #include <process.h>
@@ -1191,6 +1192,12 @@ static void __cdecl test_from_beginthread(void *arg)
 }
 #endif
 
+static int __cdecl test_from_thrd_create(void *arg)
+{
+  (void)arg;
+  return test();
+}
+
 #ifdef _WIN32
 #if defined(__i386__)
 /* We need to make sure that we align the stack to 16 bytes for the sake of SSE */
@@ -1207,6 +1214,7 @@ static LONG WINAPI catch_unhandled_seh_exception(EXCEPTION_POINTERS *exception_d
 int main(void)
 {
   int ret = 0;
+  thrd_t cthread;
   pthread_t pthread;
 #ifdef _WIN32
   HANDLE wthread;
@@ -1288,6 +1296,22 @@ int main(void)
     ret |= tret;
   }
 #endif
+
+  puts("");
+
+  puts("==== fourth thread via thrd_create ====");
+  if (thrd_create(&cthread, test_from_thrd_create, NULL) != thrd_success)
+  {
+    puts("\nfailed to spawn fourth thread via thrd_create()");
+    ret |= 1;
+  }
+  else
+  {
+    int tret;
+    if (thrd_join(cthread, &tret) != thrd_success)
+      tret = 1;
+    ret |= tret;
+  }
 
   if (ret)
     puts("\nsome subtests failed");
