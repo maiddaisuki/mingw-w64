@@ -174,8 +174,20 @@ src_libws2_32=libsrc/ws2_32.c \
   libsrc/wspiapi/WspiapiLoad.c               libsrc/wspiapi/WspiapiGetAddrInfo.c       libsrc/wspiapi/WspiapiGetNameInfo.c        \
   libsrc/wspiapi/WspiapiFreeAddrInfo.c
 
+src_c11_threads=\
+  threads/_thrd_sleep32.c \
+  threads/_thrd_sleep64.c \
+  threads/thrd_create.c \
+  threads/thrd_current.c \
+  threads/thrd_detach.c \
+  threads/thrd_equal.c \
+  threads/thrd_exit.c \
+  threads/thrd_join.c \
+  threads/thrd_yield.c
+
 # Files included in all libmsvcr*.a
 src_msvcrt_common=\
+  $(src_c11_threads) \
   include/msvcrt.h \
   include/msvcrt_or_emu_glue.h \
   include/mingw-wchar.h \
@@ -1679,6 +1691,9 @@ include lib32/Makefile.am
 if !W32API
 lib32_DATA += lib32/libglut.a lib32/libmsvcp60.a lib32/libmsvcp120_app.a
 
+noinst_LIBRARIES += lib32/libc11_threads.a
+lib32_libc11_threads_a_SOURCES = $(src_c11_threads)
+
 lib32_DATA += lib32/libcrtdll.a
 lib32/libcrtdll.a: lib32/crtdll.mri lib32/libcrtdll_def.a lib32/libmsvcrt_common.a lib32/libcrtdll_extra.a
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
@@ -2094,6 +2109,9 @@ include lib64/Makefile.am
 if !W32API
 lib64_DATA += lib64/libmsvcp60.a lib64/libmsvcp120_app.a
 
+noinst_LIBRARIES += lib64/libc11_threads.a
+lib64_libc11_threads_a_SOURCES = $(src_c11_threads)
+
 lib64_DATA += lib64/libmsvcr80.a
 lib64/libmsvcr80.a: lib-common/msvcr80.mri lib64/libmsvcr80_def.a lib64/libmsvcrt_common.a lib64/libmsvcr80_extra.a
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
@@ -2449,6 +2467,9 @@ include libarm32/Makefile.am
 if !W32API
 libarm32_DATA += libarm32/libmsvcp60.a
 
+noinst_LIBRARIES += libarm32/libc11_threads.a
+libarm32_libc11_threads_a_SOURCES = $(src_c11_threads)
+
 libarm32_DATA += libarm32/libmsvcr110.a
 libarm32/libmsvcr110.a: lib-common/msvcr110.mri libarm32/libmsvcr110_def.a libarm32/libmsvcrt_common.a libarm32/libmsvcr110_extra.a
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
@@ -2794,6 +2815,9 @@ endif
 include libarm64/Makefile.am
 
 if !W32API
+noinst_LIBRARIES += libarm64/libc11_threads.a
+libarm64_libc11_threads_a_SOURCES = $(src_c11_threads)
+
 libarm64_DATA += libarm64/libucrt.a libarm64/libucrtbase.a libarm64/libucrtbased.a libarm64/libucrtapp.a libarm64/libucrt_vcruntime140.a
 noinst_LIBRARIES += libarm64/libmsvcrt_common.a libarm64/libmsvcrt_extra.a libarm64/libucrt_extra.a libarm64/libucrtapp_extra.a
 libarm64_libmsvcrt_common_a_SOURCES = $(src_msvcrt_commonarm64)
@@ -4467,12 +4491,12 @@ endif
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
 	$(AM_V_at)$(RANLIB) $@
 
-lib32/libucrtbase.a lib64/libucrtbase.a libarm32/libucrtbase.a libarm64/libucrtbase.a: %/libucrtbase.a: lib-common/ucrtbase.mri %/libucrtbase_def.a %/libucrt_extra.a
+lib32/libucrtbase.a lib64/libucrtbase.a libarm32/libucrtbase.a libarm64/libucrtbase.a: %/libucrtbase.a: lib-common/ucrtbase.mri %/libucrtbase_def.a %/libucrt_extra.a %/libc11_threads.a
 	$(AM_V_at)rm -f $@
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
 	$(AM_V_at)$(RANLIB) $@
 
-lib32/libucrtbased.a lib64/libucrtbased.a libarm32/libucrtbased.a libarm64/libucrtbased.a: %/libucrtbased.a: lib-common/ucrtbased.mri %/libucrtbased_def.a %/libucrt_extra.a
+lib32/libucrtbased.a lib64/libucrtbased.a libarm32/libucrtbased.a libarm64/libucrtbased.a: %/libucrtbased.a: lib-common/ucrtbased.mri %/libucrtbased_def.a %/libucrt_extra.a %/libc11_threads.a
 	$(AM_V_at)rm -f $@
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
 	$(AM_V_at)$(RANLIB) $@
@@ -4487,20 +4511,20 @@ lib32/libucrtbased.a lib64/libucrtbased.a libarm32/libucrtbased.a libarm64/libuc
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
 	$(AM_V_at)$(RANLIB) $@
 
-%/libucrt.a: lib-common/ucrt.mri %/libucrt_common.a %/libapi-ms-win-crt-private-l1-1-0.a
+%/libucrt.a: lib-common/ucrt.mri %/libucrt_common.a %/libapi-ms-win-crt-private-l1-1-0.a %/libc11_threads.a
 	$(AM_V_at)rm -f $@
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
 	$(AM_V_at)$(RANLIB) $@
 
 # The same as libucrt.a above, but without the -private lib and with some more
 # statically linked functions.
-%/libucrtapp.a: lib-common/ucrtapp.mri %/libucrt_common.a %/libucrtapp_extra.a
+%/libucrtapp.a: lib-common/ucrtapp.mri %/libucrt_common.a %/libucrtapp_extra.a %/libc11_threads.a
 	$(AM_V_at)rm -f $@
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
 	$(AM_V_at)$(RANLIB) $@
 
 # The same as libucrt.a above, but without the -private lib and with vcruntime140 + vcruntime140_threads lib (for non-arm32)
-libarm32/libucrt_vcruntime140.a: %/libucrt_vcruntime140.a: libarm32/ucrt_vcruntime140.mri %/libucrt_common.a %/libvcruntime140.a
+libarm32/libucrt_vcruntime140.a: %/libucrt_vcruntime140.a: libarm32/ucrt_vcruntime140.mri %/libucrt_common.a %/libvcruntime140.a %/libc11_threads.a
 lib32/libucrt_vcruntime140.a lib64/libucrt_vcruntime140.a libarm64/libucrt_vcruntime140.a: %/libucrt_vcruntime140.a: lib-common/ucrt_vcruntime140.mri %/libucrt_common.a %/libvcruntime140.a %/libvcruntime140_threads.a
 %/libucrt_vcruntime140.a:
 	$(AM_V_at)rm -f $@

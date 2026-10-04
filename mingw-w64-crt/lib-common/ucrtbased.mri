@@ -1,5 +1,6 @@
 CREATE libucrtbased.a
 ADDLIB libucrtbased_def.a
 ADDLIB libucrt_extra.a
+ADDLIB libc11_threads.a
 SAVE
 END
