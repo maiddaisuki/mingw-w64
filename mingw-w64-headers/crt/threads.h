@@ -53,7 +53,7 @@ int __cdecl cnd_init(cnd_t *_Cond);
 int __cdecl cnd_signal(cnd_t *_Cond);
 int __cdecl _cnd_timedwait32(cnd_t *_Cond, mtx_t *_Mtx, const struct _timespec32 *_Ts);
 int __cdecl _cnd_timedwait64(cnd_t *_Cond, mtx_t *_Mtx, const struct _timespec64 *_Ts);
-int cnd_wait(cnd_t *_Cond, mtx_t *_Mtx);
+int __cdecl cnd_wait(cnd_t *_Cond, mtx_t *_Mtx);
 
 /* thrd */
 
@@ -99,7 +99,7 @@ int __cdecl tss_set(tss_t _Key, void *_Val);
 
 /* once */
 
-#define ONCE_FLAG_INIT { 0 }
+#define ONCE_FLAG_INIT { NULL }
 
 typedef struct {
   void *_Opaque;
