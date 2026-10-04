@@ -177,6 +177,7 @@ src_libws2_32=libsrc/ws2_32.c \
 src_c11_threads=\
   threads/_thrd_sleep32.c \
   threads/_thrd_sleep64.c \
+  threads/call_once.c \
   threads/thrd_create.c \
   threads/thrd_current.c \
   threads/thrd_detach.c \
