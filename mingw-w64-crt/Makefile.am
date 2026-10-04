@@ -1763,15 +1763,7 @@ lib32_DATA += lib32/libmsvcr120_app.a
 lib32/libmsvcr120_app.a: lib-common/msvcr120_app.mri lib32/libmsvcr120_app_def.a lib32/libmsvcrt_common.a lib32/libmsvcr120_extra.a lib32/libmsvcr120_app_extra.a
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
 
-lib32_DATA += lib32/libucrtbase.a
-lib32/libucrtbase.a: lib-common/ucrtbase.mri lib32/libucrtbase_def.a lib32/libucrt_extra.a
-	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
-
-lib32_DATA += lib32/libucrtbased.a
-lib32/libucrtbased.a: lib-common/ucrtbased.mri lib32/libucrtbased_def.a lib32/libucrt_extra.a
-	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
-
-lib32_DATA += lib32/libucrt.a lib32/libucrtapp.a lib32/libucrt_vcruntime140.a
+lib32_DATA += lib32/libucrt.a lib32/libucrtbase.a lib32/libucrtbased.a lib32/libucrtapp.a lib32/libucrt_vcruntime140.a
 noinst_LIBRARIES += lib32/libcrtdll_extra.a lib32/libmsvcrt10_extra.a lib32/libmsvcrt20_extra.a lib32/libmsvcrt40_extra.a lib32/libmsvcrt_common.a lib32/libmsvcrt_extra.a lib32/libmsvcrtd_extra.a lib32/libmsvcr70_extra.a lib32/libmsvcr71_extra.a lib32/libmsvcr80_extra.a lib32/libmsvcr90_extra.a lib32/libmsvcr100_extra.a lib32/libmsvcr110_extra.a lib32/libmsvcr120_extra.a lib32/libmsvcr120_app_extra.a lib32/libucrt_extra.a lib32/libucrtapp_extra.a
 lib32_libcrtdll_extra_a_SOURCES = $(src_crtdll)
 lib32_libcrtdll_extra_a_CPPFLAGS = $(CPPFLAGS32) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
@@ -2146,15 +2138,7 @@ lib64_DATA += lib64/libmsvcr120_app.a
 lib64/libmsvcr120_app.a: lib-common/msvcr120_app.mri lib64/libmsvcr120_app_def.a lib64/libmsvcrt_common.a lib64/libmsvcr120_extra.a lib64/libmsvcr120_app_extra.a
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
 
-lib64_DATA += lib64/libucrtbase.a
-lib64/libucrtbase.a: lib-common/ucrtbase.mri lib64/libucrtbase_def.a lib64/libucrt_extra.a
-	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
-
-lib64_DATA += lib64/libucrtbased.a
-lib64/libucrtbased.a: lib-common/ucrtbased.mri lib64/libucrtbased_def.a lib64/libucrt_extra.a
-	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
-
-lib64_DATA += lib64/libucrt.a lib64/libucrtapp.a lib64/libucrt_vcruntime140.a
+lib64_DATA += lib64/libucrt.a lib64/libucrtbase.a lib64/libucrtbased.a lib64/libucrtapp.a lib64/libucrt_vcruntime140.a
 noinst_LIBRARIES += lib64/libmsvcrt_common.a lib64/libmsvcrt_extra.a lib64/libmsvcr80_extra.a lib64/libmsvcr90_extra.a lib64/libmsvcr100_extra.a lib64/libmsvcr110_extra.a lib64/libmsvcr120_extra.a lib64/libmsvcr120_app_extra.a lib64/libucrt_extra.a lib64/libucrtapp_extra.a
 lib64_libmsvcrt_common_a_SOURCES = $(src_msvcrt_common64)
 lib64_libmsvcrt_common_a_CPPFLAGS=$(CPPFLAGS64) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
@@ -2485,15 +2469,7 @@ libarm32_DATA += libarm32/libmsvcr120_app.a
 libarm32/libmsvcr120_app.a: lib-common/msvcr120_app.mri libarm32/libmsvcr120_app_def.a libarm32/libmsvcrt_common.a libarm32/libmsvcr120_app_extra.a
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
 
-libarm32_DATA += libarm32/libucrtbase.a
-libarm32/libucrtbase.a: lib-common/ucrtbase.mri libarm32/libucrtbase_def.a libarm32/libucrt_extra.a
-	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
-
-libarm32_DATA += libarm32/libucrtbased.a
-libarm32/libucrtbased.a: lib-common/ucrtbased.mri libarm32/libucrtbased_def.a libarm32/libucrt_extra.a
-	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
-
-libarm32_DATA += libarm32/libucrt.a libarm32/libucrtapp.a libarm32/libucrt_vcruntime140.a
+libarm32_DATA += libarm32/libucrt.a libarm32/libucrtbase.a libarm32/libucrtbased.a libarm32/libucrtapp.a libarm32/libucrt_vcruntime140.a
 noinst_LIBRARIES += libarm32/libmsvcrt_common.a libarm32/libmsvcrt_extra.a libarm32/libmsvcr110_extra.a libarm32/libmsvcr120_extra.a libarm32/libmsvcr120_app_extra.a libarm32/libucrt_extra.a libarm32/libucrtapp_extra.a
 libarm32_libmsvcrt_common_a_SOURCES = $(src_msvcrt_commonarm32)
 libarm32_libmsvcrt_common_a_CPPFLAGS=$(CPPFLAGSARM32) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
@@ -2818,15 +2794,7 @@ endif
 include libarm64/Makefile.am
 
 if !W32API
-libarm64_DATA += libarm64/libucrtbase.a
-libarm64/libucrtbase.a: lib-common/ucrtbase.mri libarm64/libucrtbase_def.a libarm64/libucrt_extra.a
-	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
-
-libarm64_DATA += libarm64/libucrtbased.a
-libarm64/libucrtbased.a: lib-common/ucrtbased.mri libarm64/libucrtbased_def.a libarm64/libucrt_extra.a
-	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
-
-libarm64_DATA += libarm64/libucrt.a libarm64/libucrtapp.a libarm64/libucrt_vcruntime140.a
+libarm64_DATA += libarm64/libucrt.a libarm64/libucrtbase.a libarm64/libucrtbased.a libarm64/libucrtapp.a libarm64/libucrt_vcruntime140.a
 noinst_LIBRARIES += libarm64/libmsvcrt_common.a libarm64/libmsvcrt_extra.a libarm64/libucrt_extra.a libarm64/libucrtapp_extra.a
 libarm64_libmsvcrt_common_a_SOURCES = $(src_msvcrt_commonarm64)
 libarm64_libmsvcrt_common_a_CPPFLAGS=$(CPPFLAGSARM64) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
@@ -4495,6 +4463,16 @@ endif
 		%/libmsvfw32.a \
 		%/libavifil32.a \
 		%/libavicap32.a
+	$(AM_V_at)rm -f $@
+	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
+	$(AM_V_at)$(RANLIB) $@
+
+lib32/libucrtbase.a lib64/libucrtbase.a libarm32/libucrtbase.a libarm64/libucrtbase.a: %/libucrtbase.a: lib-common/ucrtbase.mri %/libucrtbase_def.a %/libucrt_extra.a
+	$(AM_V_at)rm -f $@
+	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
+	$(AM_V_at)$(RANLIB) $@
+
+lib32/libucrtbased.a lib64/libucrtbased.a libarm32/libucrtbased.a libarm64/libucrtbased.a: %/libucrtbased.a: lib-common/ucrtbased.mri %/libucrtbased_def.a %/libucrt_extra.a
 	$(AM_V_at)rm -f $@
 	$(AM_V_GEN)cd $(dir $@) && $(AR) -M < $(abspath $<)
 	$(AM_V_at)$(RANLIB) $@
