@@ -776,6 +776,45 @@ jobs:
           export PATH=/gcc-mingw/bin:$PATH
           ${{matrix.arch}}-w64-mingw32-gcc -std=c99 -march=i386 -o t_intrinc.exe mingw-w64-crt/testcases/t_intrinc.c mingw-w64-crt/testcases/libtest.c
           ./t_intrinc.exe
+      - name: Run testcases for crtdll.dll
+        if: ${{ matrix.arch == 'i686' && matrix.crt == 'msvcrt' }}
+        continue-on-error: true
+        run: |
+          export PATH=/gcc-mingw/bin:$PATH
+          cd mingw-w64-crt/build
+          make -j$(nproc) -C testcases clean
+          make -j$(nproc) check -i -O --no-print-directory CFLAGS="-mcrtdll=crtdll" CXXFLAGS="-mcrtdll=crtdll" LDFLAGS='-static' TESTS=
+          make -j$(nproc) check -i -O --no-print-directory CFLAGS="-mcrtdll=crtdll" CXXFLAGS="-mcrtdll=crtdll" LDFLAGS='-static'
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-mcrtdll=crtdll" CXXFLAGS="-mcrtdll=crtdll" LDFLAGS='-static' || { cat testcases/test-suite.log; exit 1; }
+      - name: Run testcases for msvcrt20.dll
+        if: ${{ matrix.arch == 'i686' && matrix.crt == 'msvcrt' }}
+        continue-on-error: true
+        run: |
+          export PATH=/gcc-mingw/bin:$PATH
+          cd mingw-w64-crt/build
+          make -j$(nproc) -C testcases clean
+          make -j$(nproc) check -i -O --no-print-directory CFLAGS="-mcrtdll=msvcrt20" CXXFLAGS="-mcrtdll=msvcrt20" LDFLAGS='-static' TESTS=
+          make -j$(nproc) check -i -O --no-print-directory CFLAGS="-mcrtdll=msvcrt20" CXXFLAGS="-mcrtdll=msvcrt20" LDFLAGS='-static'
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-mcrtdll=msvcrt20" CXXFLAGS="-mcrtdll=msvcrt20" LDFLAGS='-static' || { cat testcases/test-suite.log; exit 1; }
+      - name: Run testcases for msvcrt40.dll
+        if: ${{ matrix.arch == 'i686' && matrix.crt == 'msvcrt' }}
+        continue-on-error: true
+        run: |
+          export PATH=/gcc-mingw/bin:$PATH
+          cd mingw-w64-crt/build
+          make -j$(nproc) -C testcases clean
+          make -j$(nproc) check -i -O --no-print-directory CFLAGS="-mcrtdll=msvcrt40" CXXFLAGS="-mcrtdll=msvcrt40" LDFLAGS='-static' TESTS=
+          make -j$(nproc) check -i -O --no-print-directory CFLAGS="-mcrtdll=msvcrt40" CXXFLAGS="-mcrtdll=msvcrt40" LDFLAGS='-static'
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-mcrtdll=msvcrt40" CXXFLAGS="-mcrtdll=msvcrt40" LDFLAGS='-static' || { cat testcases/test-suite.log; exit 1; }
+      - name: Run testcases for ucrtapp
+        if: ${{ matrix.arch == 'i686' && matrix.crt == 'ucrt' }}
+        run: |
+          export PATH=/gcc-mingw/bin:$PATH
+          cd mingw-w64-crt/build
+          make -j$(nproc) -C testcases clean
+          make -j$(nproc) check -i -O --no-print-directory CFLAGS="-mcrtdll=ucrtapp" CXXFLAGS="-mcrtdll=ucrtapp" LDFLAGS='-static' TESTS=
+          make -j$(nproc) check -i -O --no-print-directory CFLAGS="-mcrtdll=ucrtapp" CXXFLAGS="-mcrtdll=ucrtapp" LDFLAGS='-static'
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-mcrtdll=ucrtapp" CXXFLAGS="-mcrtdll=ucrtapp" LDFLAGS='-static' || { cat testcases/test-suite.log; exit 1; }
       - name: Build and test winpthreads
         run: |
           export PATH=/gcc-mingw/bin:$PATH
