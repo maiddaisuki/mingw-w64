@@ -7,10 +7,17 @@
 #include <_mingw_mac.h>
 
 #ifndef __arm64ec__
+
+#if defined(__i386__)
+        .globl  __MINGW_USYMBOL(__mingw_longjmp_noseh)
+        .def    __MINGW_USYMBOL(__mingw_longjmp_noseh); .scl 2; .type 32; .endef
+__MINGW_USYMBOL(__mingw_longjmp_noseh):
+#else
         .globl  __MINGW_USYMBOL(longjmp)
         .def    __MINGW_USYMBOL(longjmp); .scl 2; .type 32; .endef
-
 __MINGW_USYMBOL(longjmp):
+#endif
+
 #if defined(__i386__)
         movl    4(%esp),%ecx         /* jmp_buf */
         movl    8(%esp),%eax         /* retval */
@@ -91,6 +98,7 @@ __MINGW_USYMBOL(longjmp):
         ret
 #endif
 
+#if !defined(__i386__)
         .data
         .globl  __MINGW_IMP_LSYMBOL(longjmp)
 __MINGW_IMP_LSYMBOL(longjmp):
@@ -99,4 +107,6 @@ __MINGW_IMP_LSYMBOL(longjmp):
 #else
         .long   __MINGW_USYMBOL(longjmp)
 #endif
+#endif
+
 #endif /* __arm64ec__ */

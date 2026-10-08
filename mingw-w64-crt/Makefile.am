@@ -509,6 +509,7 @@ src_ucrtbase=\
 src_ucrtapp=\
   misc/longjmp.S \
   misc/setjmp.S \
+  misc/ucrtapp__longjmpex.c \
   string/memchr.c \
   string/memcmp.c \
   string/memcpy.c \
