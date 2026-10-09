@@ -36,10 +36,14 @@ __MINGW_USYMBOL(longjmp):
         adcq    $0,%rax              /* if not then increase by one via CF */
         cmpq    $0,(%rcx)            /* jmp_buf->Frame */
         je      .Llongjmp_skip_seh
+        .Llongjmp_seh:
+        .seh_proc .Llongjmp_seh
         /* Logic of SEH longjmp implementation based on x86_64 wine longjmp code from:
            https://gitlab.winehq.org/wine/wine/-/blob/wine-10.20/dlls/msvcrt/except_x86_64.c#L94-110
          */
+        .seh_stackalloc 184
         subq    $184,%rsp               /* allocate 32+sizeof(EXCEPTION_RECORD) = 32+152 */
+        .seh_endprologue
         movl    $0x80000026,0x20(%rsp)  /* EXCEPTION_RECORD.ExceptionCode = STATUS_LONGJUMP */
         movl    $0,0x24(%rsp)           /* EXCEPTION_RECORD.ExceptionFlags = 0 */
         movq    $0,0x28(%rsp)           /* EXCEPTION_RECORD.ExceptionRecord = NULL */
@@ -51,6 +55,7 @@ __MINGW_USYMBOL(longjmp):
         leaq    0x20(%rsp),%r8          /* ExceptionRecord = &EXCEPTION_RECORD */
         movq    %rax,%r9                /* ReturnValue = retval */
         callq   *__MINGW_USYMBOL(__MINGW_IMP_SYMBOL(RtlUnwind))(%rip)
+        .seh_endproc
         /* RtlUnwind does not return, instead it jumps to the address stored in %rdx */
         .Llongjmp_skip_seh:
         movq    0x8(%rcx),%rbx       /* jmp_buf->Rbx */
