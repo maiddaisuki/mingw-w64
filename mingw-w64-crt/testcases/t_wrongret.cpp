@@ -11,6 +11,7 @@ int F()
         std::cout << std::endl;
         return 12345;
         std::cout << std::endl;
+        return -1;
 }
 
 int main()
