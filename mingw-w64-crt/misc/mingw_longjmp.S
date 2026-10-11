@@ -60,6 +60,9 @@ __MINGW_USYMBOL(__mingw_setjmp):
 	.def	__MINGW_USYMBOL(__mingw_longjmp);	.scl	2;	.type	32;	.endef
 __MINGW_USYMBOL(__mingw_longjmp):
 #if defined(_ARM_) || defined(__arm__)
+	ldr     r2,  [r0, #0x0]      /* jmp_buf->Frame */
+	cmp     r2,  #0
+	bne     __MINGW_USYMBOL(longjmp) /* Use SEH longjmp if SEH frame is filled */
 	ldr     r4,  [r0, #0x4]      /* jmp_buf->R4 */
 	ldr     r5,  [r0, #0x8]      /* jmp_buf->R5 */
 	ldr     r6,  [r0, #0xc]      /* jmp_buf->R6 */
@@ -86,6 +89,9 @@ __MINGW_USYMBOL(__mingw_longjmp):
 	movls   r0,  #1
 	bx      r2
 #elif defined(_ARM64_) || defined(__aarch64__)
+	ldr     x2,       [x0, #0x00] /* jmp_buf->Frame */
+	cmp     x2,  #0
+	b.ne    __MINGW_USYMBOL(longjmp) /* Use SEH longjmp if SEH frame is filled */
 	ldp     x19, x20, [x0, #0x10] /* jmp_buf->X19, X20 */
 	ldp     x21, x22, [x0, #0x20] /* jmp_buf->X21, X22 */
 	ldp     x23, x24, [x0, #0x30] /* jmp_buf->X23, X24 */
