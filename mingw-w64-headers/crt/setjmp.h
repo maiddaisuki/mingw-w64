@@ -221,51 +221,64 @@ _CRT_END_C_HEADER
  * It allows '#include <setjmpex.h>' to override the existing setjmp() and longjmp() definitions.
  */
 
-#pragma push_macro("__has_builtin")
-#ifndef __has_builtin
-  #define __has_builtin(x) 0
-#endif
-
 #ifdef setjmp
 #  undef setjmp
 #endif
-#if defined(__i386__)
+#if defined(__i386__) /* i386 setjmp macro always stores SEH frame info for unwind */
 #  define setjmp(BUF) _setjmp3((BUF), 2, NULL /*UnwindFunc*/, -1 /*TryLevel*/)
-#elif !defined(_INC_SETJMPEX) && (!defined(__SEH__) || defined(__USE_MINGW_SETJMP_NON_SEH))
-#  if defined(__arm__) || defined(__aarch64__)
-#    define setjmp(BUF) __mingw_setjmp((BUF))
+#elif defined(__x86_64__) /* amd64 requires current stack pointer address */
+#  if defined(_INC_SETJMPEX)
+#    if (defined(__GNUC__) && __GNUC__ >= 14) || (defined(__clang__) && __clang_major__ >= 22)
+#      define setjmp(BUF) _setjmpex((BUF), __builtin_stack_address())
+#    else
+#      define setjmp(BUF) _setjmpex((BUF), mingw_getsp())
+#    endif
+#  elif defined(__SEH__) && !defined(__USE_MINGW_SETJMP_NON_SEH)
+#    if (defined(__GNUC__) && __GNUC__ >= 14) || (defined(__clang__) && __clang_major__ >= 22)
+#      define setjmp(BUF) _setjmp((BUF), __builtin_stack_address())
+#    else
+#      define setjmp(BUF) _setjmp((BUF), mingw_getsp())
+#    endif
 #  else
 #    define setjmp(BUF) _setjmp((BUF), NULL)
 #  endif
-#elif !defined(_INC_SETJMPEX) && !defined(__aarch64__)
-#  if __has_builtin(__builtin_sponentry)
+#elif defined(__arm__) /* arm32 requires stack pointer address from the function entry point */
+#  if defined(_INC_SETJMPEX)
+#    define setjmp(BUF) _setjmpex((BUF), __builtin_sponentry())
+#  elif defined(__SEH__) && !defined(__USE_MINGW_SETJMP_NON_SEH)
 #    define setjmp(BUF) _setjmp((BUF), __builtin_sponentry())
-#  elif (__MINGW_GCC_VERSION < 40702) && !defined(__clang__)
-#    define setjmp(BUF) _setjmp((BUF), mingw_getsp())
 #  else
-#    define setjmp(BUF) _setjmp((BUF), __builtin_frame_address(0))
+#    define setjmp(BUF) _setjmp((BUF), NULL)
+#  endif
+#elif defined(__aarch64__) /* arm64 requires stack pointer address from the function entry point and it does not have _setjmp function */
+#  if defined(_INC_SETJMPEX) || (defined(__SEH__) && !defined(__USE_MINGW_SETJMP_NON_SEH))
+#    define setjmp(BUF) _setjmpex((BUF), __builtin_sponentry())
+#  else
+#    define setjmp(BUF) _setjmpex((BUF), NULL)
 #  endif
 #else
-#  if __has_builtin(__builtin_sponentry)
-#    define setjmp(BUF) _setjmpex((BUF), __builtin_sponentry())
-#  elif (__MINGW_GCC_VERSION < 40702) && !defined(__clang__)
-#    define setjmp(BUF) _setjmpex((BUF), mingw_getsp())
-#  else
-#    define setjmp(BUF) _setjmpex((BUF), __builtin_frame_address(0))
-#  endif
+#  error Unknown platform
 #endif
 
 #ifdef longjmp
 #  undef longjmp
 #endif
-#if defined(_INC_SETJMPEX) && defined(__i386__)
-#  define longjmp _longjmpex
-#elif !defined(_INC_SETJMPEX) && defined(__USE_MINGW_SETJMP_NON_SEH) && defined(__i386__)
-#  define longjmp __mingw_longjmp_noseh
-#elif !defined(_INC_SETJMPEX) && (!defined(__SEH__) || defined(__USE_MINGW_SETJMP_NON_SEH)) && (defined(__arm__) || defined(__aarch64__))
-#  define longjmp __mingw_longjmp
+#if defined(__i386__) /* i386 longjmp function always uses SEH frame info for unwind */
+#  if defined(_INC_SETJMPEX)
+#    define longjmp(BUF, VALUE) _longjmpex((BUF), (VALUE))
+#  elif !defined(__USE_MINGW_SETJMP_NON_SEH)
+#    define longjmp(BUF, VALUE) longjmp((BUF), (VALUE))
+#  else
+#    define longjmp(BUF, VALUE) __mingw_longjmp_noseh((BUF), (VALUE))
+#  endif
+#elif defined(__x86_64__) /* amd64 longjmp function uses SEH frame info for unwind on demand only when is non-NULL */
+#  define longjmp(BUF, VALUE) longjmp((BUF), (VALUE))
+#elif defined(__arm__) || defined(__aarch64__) /* arm32 and arm64 longjmp function always uses SEH frame info for unwind */
+#  if defined(_INC_SETJMPEX) || (defined(__SEH__) && !defined(__USE_MINGW_SETJMP_NON_SEH))
+#    define longjmp(BUF, VALUE) longjmp((BUF), (VALUE))
+#  else
+#    define longjmp(BUF, VALUE) __mingw_longjmp((BUF), (VALUE))
+#  endif
 #else
-#  define longjmp longjmp
+#  error Unknown platform
 #endif
-
-#pragma pop_macro("__has_builtin")
