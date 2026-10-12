@@ -507,6 +507,7 @@ src_ucrtbase=\
 
 # Files included in libucrtapp.a
 src_ucrtapp=\
+  misc/__mingw_longjmp_noseh.S \
   misc/_longjmpex.c \
   misc/longjmp.S \
   misc/setjmp.S \
