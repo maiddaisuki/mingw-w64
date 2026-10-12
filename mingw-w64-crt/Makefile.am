@@ -509,7 +509,7 @@ src_ucrtbase=\
 src_ucrtapp=\
   misc/__mingw_longjmp_noseh.S \
   misc/_longjmpex.c \
-  misc/longjmp.S \
+  misc/longjmp.c \
   misc/setjmp.S \
   string/memchr.c \
   string/memcmp.c \
