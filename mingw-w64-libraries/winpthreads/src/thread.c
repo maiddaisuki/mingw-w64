@@ -721,7 +721,7 @@ __pthread_delay_np (const struct _timespec64 *interval)
     }
   pthread_testcancel ();
   if (s->evStart)
-    _pthread_wait_for_single_object (s->evStart, to);
+    winpthreads_wait_for_single_object (s->evStart, to);
   else
     Sleep (to);
   pthread_testcancel ();
@@ -755,7 +755,7 @@ _pthread_delay_np_ms (DWORD to)
     }
   pthread_testcancel ();
   if (s->evStart)
-    _pthread_wait_for_single_object (s->evStart, to);
+    winpthreads_wait_for_single_object (s->evStart, to);
   else
     Sleep (to);
   pthread_testcancel ();
