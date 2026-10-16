@@ -23,6 +23,8 @@
 #ifndef WIN_PTHREADS_RWLOCK_H
 #define WIN_PTHREADS_RWLOCK_H
 
+#include "winpthreads.h"
+
 #define LIFE_RWLOCK 0xBAB1F0ED
 #define DEAD_RWLOCK 0xDEADB0EF
 

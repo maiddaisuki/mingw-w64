@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2011-2016  mingw-w64 project
+   Copyright (c) 2011-2016, 2026 mingw-w64 project
 
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -30,8 +30,14 @@
 /* public header files */
 #include "pthread.h"
 /* internal header files */
-#include "misc.h"
 #include "winpthreads-time.h"
+
+/**
+ * File Summary:
+ *
+ * This file contains miscellaneous definitions used by the library,
+ * which do not fit into any other source file.
+ */
 
 HRESULT (WINAPI *_pthread_set_thread_description) (HANDLE, PCWSTR) = NULL;
 BOOL (WINAPI *_pthread_get_handle_information) (HANDLE, LPDWORD) = NULL;

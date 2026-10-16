@@ -44,7 +44,6 @@
 
 #include "../include/pthread.h"
 #include "../include/semaphore.h"
-#include "../src/misc.h"
 #include "../src/cond.h"
 #include "../src/rwlock.h"
 #include "../src/thread.h"

@@ -23,6 +23,8 @@
 #ifndef WIN_PTHREADS_BARRIER_H
 #define WIN_PTHREADS_BARRIER_H
 
+#include "winpthreads.h"
+
 #define LIFE_BARRIER 0xBAB1FEED
 #define DEAD_BARRIER 0xDEADB00F
 

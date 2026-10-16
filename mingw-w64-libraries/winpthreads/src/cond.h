@@ -23,6 +23,8 @@
 #ifndef WIN_PTHREADS_COND_H
 #define WIN_PTHREADS_COND_H
 
+#include "winpthreads.h"
+
 #define CHECK_COND(c)                                                   \
     do {                                                                \
         if (!(c) || !*c || (*c == PTHREAD_COND_INITIALIZER)             \
