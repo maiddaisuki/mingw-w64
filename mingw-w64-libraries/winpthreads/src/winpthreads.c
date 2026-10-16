@@ -270,13 +270,12 @@ unsigned long winpthreads_wait_for_single_object (void *handle, unsigned long ti
   DWORD result;
   unsigned long long start_time, end_time;
   unsigned long wait_time;
-  long long frequency = 0;
 
   if (timeout == INFINITE || timeout == 0) {
     return WaitForSingleObject ((HANDLE) handle, (DWORD) timeout);
   }
 
-  start_time = winpthreads_windows_time_ms (&frequency);
+  start_time = winpthreads_windows_time_ms ();
   end_time = start_time + timeout;
   wait_time = timeout;
 
@@ -289,7 +288,7 @@ unsigned long winpthreads_wait_for_single_object (void *handle, unsigned long ti
       break;
     }
 
-    current_time = winpthreads_windows_time_ms (&frequency);
+    current_time = winpthreads_windows_time_ms ();
 
     if (current_time >= end_time) {
       break;
@@ -306,13 +305,12 @@ unsigned long winpthreads_wait_for_multiple_objects (unsigned long count, void *
   DWORD result;
   unsigned long long start_time, end_time;
   unsigned long wait_time;
-  long long frequency = 0;
 
   if (timeout == INFINITE || timeout == 0) {
     return WaitForMultipleObjects ((DWORD) count, (HANDLE *) handles, all, (DWORD) timeout);
   }
 
-  start_time = winpthreads_windows_time_ms (&frequency);
+  start_time = winpthreads_windows_time_ms ();
   end_time = start_time + timeout;
   wait_time = timeout;
 
@@ -325,7 +323,7 @@ unsigned long winpthreads_wait_for_multiple_objects (unsigned long count, void *
       break;
     }
 
-    current_time = winpthreads_windows_time_ms (&frequency);
+    current_time = winpthreads_windows_time_ms ();
 
     if (current_time >= end_time) {
       break;
