@@ -24,7 +24,7 @@ __MINGW_ATTRIB_NORETURN __attribute__((nothrow))
 void __cdecl longjmp(jmp_buf buf, int value)
 {
     if (value == 0) value = 1;
-#if defined(__x86_64__)
+#if defined(__x86_64__) && !defined(__arm64ec__)
     /* only amd64 longjmp fallback to no-SEH unwind variant when SEH frame is NULL */
     if (__builtin_expect(((_JUMP_BUFFER *)buf)->Frame == 0, 0)) {
         asm volatile (
