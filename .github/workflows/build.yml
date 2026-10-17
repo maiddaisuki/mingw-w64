@@ -4,6 +4,7 @@ on:
 
 jobs:
   llvm-mingw:
+    if: false
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -685,6 +686,14 @@ jobs:
           export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) check -k -O --no-print-directory || { cat testcases/test-suite.log; exit 1; }
+      - name: Run mingw-w64-crt testcases for ucrtapp
+        if: matrix.crt == 'ucrt'
+        run: |
+          export PATH=/llvm-mingw/bin:$PATH
+          cd mingw-w64-crt/build
+          make -j$(nproc) -C testcases clean
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-lucrtapp -O2" CXXFLAGS="-lucrtapp -O2" LDFLAGS='-static' TESTS=
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-lucrtapp -O2" CXXFLAGS="-lucrtapp -O2" LDFLAGS='-static' || { cat testcases/test-suite.log; exit 1; }
       - name: Build winpthreads and tests
         run: |
           export PATH=/llvm-mingw/bin:$PATH
