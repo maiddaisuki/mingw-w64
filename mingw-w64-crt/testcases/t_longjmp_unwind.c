@@ -225,8 +225,8 @@ int main(int argc, char **argv)
   }
 
 #ifndef TEST_NOUNWIND
-#ifdef __i386__
-  /* i386 fs:0 based SEH does not call the last (target) handler */
+#if defined(__i386__) || defined(__arm64ec__)
+  /* i386 fs:0 based SEH and arm64ec .pdata based SEH do not call the last (target) handler */
   if (target_unwind_called != 0) {
     printf("ERROR: Target SEH unwind handler was called\n");
     ret = 1;
@@ -234,7 +234,7 @@ int main(int argc, char **argv)
     printf("OK: Target SEH unwind handler was not called\n");
   }
 #else
-  /* non-i386 .pdata based SEH always calls the last target handler with the EXCEPTION_TARGET_UNWIND flag */
+  /* non-i386/arm64ec .pdata based SEH always calls the last target handler with the EXCEPTION_TARGET_UNWIND flag */
   if (target_unwind_called == 0) {
     printf("ERROR: Target SEH unwind handler was not called\n");
     ret = 1;
