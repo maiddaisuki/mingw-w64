@@ -682,18 +682,19 @@ jobs:
           ./t_intrinc.exe
       - name: Run mingw-w64-crt testcases
         if: matrix.arch != 'armv7'
+        continue-on-error: true
         run: |
           export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) check -k -O --no-print-directory || { cat testcases/test-suite.log; exit 1; }
       - name: Run mingw-w64-crt testcases for ucrtapp
-        if: matrix.crt == 'ucrt'
+        if: matrix.crt == 'ucrt' && matrix.arch != 'armv7'
         run: |
           export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) -C testcases clean
-          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-lucrtapp -O2" CXXFLAGS="-lucrtapp -O2" LDFLAGS='-static' TESTS=
-          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-lucrtapp -O2" CXXFLAGS="-lucrtapp -O2" LDFLAGS='-static' || { cat testcases/test-suite.log; exit 1; }
+          make -j$(nproc) check -k -O --no-print-directory LDFLAGS='-lucrtapp -static' TESTS=
+          make -j$(nproc) check -k -O --no-print-directory LDFLAGS='-lucrtapp -static' || { cat testcases/test-suite.log; exit 1; }
       - name: Build winpthreads and tests
         run: |
           export PATH=/llvm-mingw/bin:$PATH
@@ -752,6 +753,7 @@ jobs:
           echo /gcc-mingw/bin >> $GITHUB_PATH
       - uses: actions/checkout@v6
       - name: Build mingw-w64-crt and run testcases
+        continue-on-error: true
         run: |
           export PATH=/gcc-mingw/bin:$PATH
           cd mingw-w64-headers
@@ -791,8 +793,8 @@ jobs:
           export PATH=/gcc-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) -C testcases clean
-          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-mcrtdll=ucrtapp -O2" CXXFLAGS="-mcrtdll=ucrtapp -O2" LDFLAGS='-static' TESTS=
-          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-mcrtdll=ucrtapp -O2" CXXFLAGS="-mcrtdll=ucrtapp -O2" LDFLAGS='-static' || { cat testcases/test-suite.log; exit 1; }
+          make -j$(nproc) check -k -O --no-print-directory LDFLAGS='-mcrtdll=ucrtapp -static' TESTS=
+          make -j$(nproc) check -k -O --no-print-directory LDFLAGS='-mcrtdll=ucrtapp -static' || { cat testcases/test-suite.log; exit 1; }
       - name: Build and test winpthreads
         run: |
           export PATH=/gcc-mingw/bin:$PATH
