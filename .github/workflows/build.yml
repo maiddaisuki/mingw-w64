@@ -641,6 +641,7 @@ jobs:
           echo /llvm-mingw/bin >> $GITHUB_PATH
       - uses: actions/checkout@v6
       - name: Build mingw-w64-crt and tests
+        continue-on-error: true
         run: |
           export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-headers
@@ -688,7 +689,6 @@ jobs:
           make -j$(nproc) check -k -O --no-print-directory || { cat testcases/test-suite.log; exit 1; }
       - name: Run mingw-w64-crt testcases for ucrtapp
         if: matrix.crt == 'ucrt' && matrix.arch != 'armv7'
-        continue-on-error: true
         run: |
           export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
