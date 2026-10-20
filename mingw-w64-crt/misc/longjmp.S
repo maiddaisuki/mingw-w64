@@ -7,6 +7,11 @@
 #include <_mingw_mac.h>
 
 #ifndef __arm64ec__
+#if defined(__i386__)
+        .globl  __MINGW_USYMBOL(__mingw_longjmp_noseh)
+        .def    __MINGW_USYMBOL(__mingw_longjmp_noseh); .scl 2; .type 32; .endef
+__MINGW_USYMBOL(__mingw_longjmp_noseh):
+#endif
         .globl  __MINGW_USYMBOL(longjmp)
         .def    __MINGW_USYMBOL(longjmp); .scl 2; .type 32; .endef
 

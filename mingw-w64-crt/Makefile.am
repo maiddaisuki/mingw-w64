@@ -528,8 +528,7 @@ src_ucrtapp_arm64=\
   misc/arm64ec/setjmp.c
 endif
 
-# Files included in libucrt*.a on x86_32
-src_ucrtbase32=\
+src_ucrtbase32_common=\
   $(src_ucrtbase) \
   math/fabsf.c \
   math/nextafterl.c \
@@ -554,6 +553,11 @@ src_ucrtbase32=\
   math/x86/fmodf.c \
   math/x86/sinf.c \
   math/x86/tanf.c
+
+# Files included in libucrt*.a on x86_32
+src_ucrtbase32=\
+  $(src_ucrtbase32_common) \
+  misc/msvcrt___mingw_longjmp_noseh.c
 
 # Files included in libucrt*.a on x86_64
 src_ucrtbase64=\
@@ -587,6 +591,7 @@ src_msvcrt32=\
   locale/_create_locale.c \
   locale/_free_locale.c \
   locale/_get_current_locale.c \
+  misc/msvcrt___mingw_longjmp_noseh.c \
   misc/msvcrt__getmainargs.c \
   misc/msvcrt__wgetmainargs.c \
   misc/i386__XcptFilter.c \
@@ -895,6 +900,9 @@ src_msvcrtarm64+=math/fabsf.c
 src_msvcrtarm64_x64=libarm64/stdio/scanf.x86_64.o
 endif
 
+src_post_msvcrt10=\
+  misc/msvcrt___mingw_longjmp_noseh.c
+
 src_pre_msvcrt20=\
   ctype/__p__pctype.c \
   ctype/__p__pwctype.c \
@@ -1107,6 +1115,7 @@ src_crtdll=\
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   misc/crtdll_stat.h \
+  misc/crtdll___mingw_longjmp_noseh.c \
   misc/crtdll__getmainargs.c \
   misc/crtdll_fstat.c \
   misc/crtdll_stat.c \
@@ -1123,7 +1132,8 @@ src_msvcrt10=\
   $(src_pre_msvcr100) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
-  misc/crtdll__getmainargs.c
+  misc/crtdll__getmainargs.c \
+  misc/msvcrt10___mingw_longjmp_noseh.c
 
 src_msvcrt20=\
   $(src_pre_msvcrt40) \
@@ -1136,6 +1146,7 @@ src_msvcrt20=\
   $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
+  $(src_post_msvcrt10) \
   misc/msvcrt20__getmainargs.c \
   misc/msvcrt20__wgetmainargs.c
 
@@ -1149,6 +1160,7 @@ src_msvcrt40=\
   $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
+  $(src_post_msvcrt10) \
   misc/msvcrt__getmainargs.c \
   misc/msvcrt__wgetmainargs.c
 
@@ -1161,6 +1173,7 @@ src_msvcrtd=\
   $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
+  $(src_post_msvcrt10) \
   locale/___lc_codepage_func.c \
   locale/___lc_handle_func.c \
   misc/msvcrt__getmainargs.c \
@@ -1174,6 +1187,7 @@ src_msvcr70=\
   $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
+  $(src_post_msvcrt10) \
   misc/__p__osplatform.c
 
 src_msvcr71=\
@@ -1183,6 +1197,7 @@ src_msvcr71=\
   $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
+  $(src_post_msvcrt10) \
   misc/__p__osplatform.c
 
 src_msvcr80=\
@@ -1192,6 +1207,7 @@ src_msvcr80=\
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   $(src_pre_msvcr120_post_msvcr71) \
+  $(src_post_msvcrt10) \
   $(src_post_msvcr71)
 
 src_msvcr90=\
@@ -1200,6 +1216,7 @@ src_msvcr90=\
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   $(src_pre_msvcr120_post_msvcr71) \
+  $(src_post_msvcrt10) \
   $(src_post_msvcr71) \
   $(src_post_msvcr80)
 
@@ -1207,23 +1224,27 @@ src_msvcr100=\
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   $(src_pre_msvcr120_post_msvcr71) \
+  $(src_post_msvcrt10) \
   $(src_post_msvcr71) \
   $(src_post_msvcr80)
 
 src_msvcr110=\
   $(src_pre_msvcr120) \
   $(src_pre_msvcr120_post_msvcr71) \
+  $(src_post_msvcrt10) \
   $(src_post_msvcr71) \
   $(src_post_msvcr80) \
   $(src_post_msvcr100)
 
 src_msvcr120=\
+  $(src_post_msvcrt10) \
   $(src_post_msvcr71) \
   $(src_post_msvcr80) \
   $(src_post_msvcr100) \
   $(src_post_msvcr110)
 
 src_msvcr120_app=\
+  $(src_post_msvcrt10) \
   $(src_post_msvcr71) \
   $(src_post_msvcr80) \
   $(src_post_msvcr100) \
@@ -1804,7 +1825,7 @@ lib32_libmsvcr120_app_extra_a_SOURCES = $(src_msvcr120_app)
 lib32_libmsvcr120_app_extra_a_CPPFLAGS=$(CPPFLAGS32) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
 lib32_libucrt_extra_a_SOURCES = $(src_ucrtbase32)
 lib32_libucrt_extra_a_CPPFLAGS=$(CPPFLAGS32) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
-lib32_libucrtapp_extra_a_SOURCES = $(src_ucrtapp)
+lib32_libucrtapp_extra_a_SOURCES = $(src_ucrtapp) $(src_ucrtbase32_common)
 lib32_libucrtapp_extra_a_CPPFLAGS=$(CPPFLAGS32) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
 
 lib32_DATA += lib32/libvcruntime140.a
@@ -2169,7 +2190,7 @@ lib64_libmsvcr120_app_extra_a_SOURCES = $(src_msvcr120_app)
 lib64_libmsvcr120_app_extra_a_CPPFLAGS=$(CPPFLAGS64) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
 lib64_libucrt_extra_a_SOURCES = $(src_ucrtbase64)
 lib64_libucrt_extra_a_CPPFLAGS=$(CPPFLAGS64) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
-lib64_libucrtapp_extra_a_SOURCES = $(src_ucrtapp)
+lib64_libucrtapp_extra_a_SOURCES = $(src_ucrtapp) $(src_ucrtbase64)
 lib64_libucrtapp_extra_a_CPPFLAGS=$(CPPFLAGS64) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
 
 lib64_DATA += lib64/libvcruntime140.a
@@ -2499,7 +2520,7 @@ libarm32_libmsvcr120_app_extra_a_SOURCES = $(src_msvcr120_app)
 libarm32_libmsvcr120_app_extra_a_CPPFLAGS=$(CPPFLAGSARM32) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
 libarm32_libucrt_extra_a_SOURCES = $(src_ucrtbasearm32)
 libarm32_libucrt_extra_a_CPPFLAGS=$(CPPFLAGSARM32) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
-libarm32_libucrtapp_extra_a_SOURCES = $(src_ucrtapp)
+libarm32_libucrtapp_extra_a_SOURCES = $(src_ucrtapp) $(src_ucrtbasearm32)
 libarm32_libucrtapp_extra_a_CPPFLAGS=$(CPPFLAGSARM32) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
 
 libarm32_DATA += libarm32/libvcruntime140.a
@@ -2826,7 +2847,7 @@ libarm64_libmsvcrt_extra_a_CPPFLAGS=$(CPPFLAGSARM64) -D__LIBMSVCRT__ -D__LIBMSVC
 libarm64_libmsvcrt_extra_a_LIBADD=$(src_msvcrtarm64_x64)
 libarm64_libucrt_extra_a_SOURCES = $(src_ucrtbasearm64)
 libarm64_libucrt_extra_a_CPPFLAGS=$(CPPFLAGSARM64) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
-libarm64_libucrtapp_extra_a_SOURCES = $(src_ucrtapp) $(src_ucrtapp_arm64)
+libarm64_libucrtapp_extra_a_SOURCES = $(src_ucrtapp) $(src_ucrtapp_arm64) $(src_ucrtbasearm64)
 libarm64_libucrtapp_extra_a_CPPFLAGS=$(CPPFLAGSARM64) -D__LIBMSVCRT__ $(extra_include) $(sysincludes)
 
 libarm64_DATA += libarm64/libvcruntime140.a
@@ -4499,7 +4520,7 @@ endif
 
 # The same as libucrt.a above, but without the -private lib and with some more
 # statically linked functions.
-%/libucrtapp.a: lib-common/ucrtapp.mri %/libucrt_extra.a %/libucrtapp_extra.a \
+%/libucrtapp.a: lib-common/ucrtapp.mri %/libucrtapp_extra.a \
 		%/libapi-ms-win-crt-conio-l1-1-0.a %/libapi-ms-win-crt-convert-l1-1-0.a %/libapi-ms-win-crt-environment-l1-1-0.a \
 		%/libapi-ms-win-crt-filesystem-l1-1-0.a %/libapi-ms-win-crt-heap-l1-1-0.a %/libapi-ms-win-crt-locale-l1-1-0.a \
 		%/libapi-ms-win-crt-math-l1-1-0.a %/libapi-ms-win-crt-multibyte-l1-1-0.a \
