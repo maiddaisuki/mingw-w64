@@ -1288,6 +1288,7 @@ src_libmingwex=\
   math/powi.def.h       math/sqrt.def.h    \
   math/cephes_mconf.h   math/fp_consts.h   math/pi_const.h \
   \
+  misc/arm64ec/__mingw_mxcsr_to_fpcsr.c \
   misc/mingw_longjmp.S \
   misc/mingw_getsp.S \
   misc/alarm.c \
