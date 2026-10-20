@@ -215,6 +215,10 @@ int main(int argc, char **argv)
   printf("SKIP: __USE_MINGW_SETJMP_NON_SEH is broken on i386\n");
   return 77;
 #endif
+#if defined(__arm64ec__)
+  printf("SKIP: __USE_MINGW_SETJMP_NON_SEH is broken on arm64ec\n");
+  return 77;
+#endif
 #endif
 
   outer_unwind_called = 0;
