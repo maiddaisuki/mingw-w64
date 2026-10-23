@@ -254,7 +254,7 @@ _CRT_END_C_HEADER
 #  if defined(_INC_SETJMPEX) || (defined(__SEH__) && !defined(__USE_MINGW_SETJMP_NON_SEH))
 #    define setjmp(BUF) _setjmpex((BUF), __builtin_sponentry())
 #  else
-#    define setjmp(BUF) _setjmpex((BUF), NULL)
+#    define setjmp(BUF) __mingw_setjmp((BUF))
 #  endif
 #else
 #  error Unknown platform
