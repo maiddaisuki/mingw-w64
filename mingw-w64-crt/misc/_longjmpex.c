@@ -34,12 +34,12 @@ void __cdecl _longjmpex(jmp_buf buf, int value)
       "pushl $0\r\n"
       "pushl $0\r\n"
       "pushl $1f\r\n" /* label after calll */
-      "pushl %0\r\n"
+      "pushl %%eax\r\n"
       "calll _RtlUnwind@16\r\n"
       "1:"
       :
-      : "rmi" (bufptr->Registration)
-      : "eax", "ecx", "edx", /* stdcall clobbered registers */
+      : "a" (bufptr->Registration) /* cannot be passed as esp-relative memory reference */
+      : "ecx", "edx", /* stdcall clobbered registers */
         "ebx", "esi", "edi", /* RtlUnwind clobbered registers */
         "memory"
     );
