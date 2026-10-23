@@ -258,7 +258,7 @@ _CRT_END_C_HEADER
 #ifdef longjmp
 #  undef longjmp
 #endif
-#if defined(_INC_SETJMPEX) && defined(__i386__)
+#elif defined(_INC_SETJMPEX) && defined(__i386__)
 #  define longjmp _longjmpex
 #if !defined(_INC_SETJMPEX) && defined(__USE_MINGW_SETJMP_NON_SEH) && defined(__i386__)
 #  define longjmp __mingw_longjmp_noseh
