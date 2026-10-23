@@ -17,15 +17,14 @@ include_HEADERS =          \
 
 libwinpthread_la_SOURCES =      \
   src/barrier.c   src/barrier.h \
-  src/clock.c                   \
   src/cond.c      src/cond.h    \
   src/misc.c      src/misc.h    \
   src/mutex.c                   \
-  src/nanosleep.c               \
   src/rwlock.c    src/rwlock.h  \
   src/sem.c       src/sem.h     \
   src/spinlock.c                \
   src/sched.c                   \
+  src/time.c      src/winpthreads-time.h  \
   src/thread.c    src/thread.h  \
   src/wpth_ver.h                \
   src/version.rc

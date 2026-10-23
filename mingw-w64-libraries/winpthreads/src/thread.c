@@ -50,6 +50,7 @@
 /* internal header files */
 #include "misc.h"
 #include "thread.h"
+#include "winpthreads-time.h"
 
 static _pthread_v *__pthread_self_lite (void);
 
@@ -523,6 +524,25 @@ __dyn_tls_pthread (HANDLE hDllHandle, DWORD dwReason, LPVOID lpreserved)
     }
 }
 
+#ifdef DLL_EXPORT
+
+/* For DLL builds register TLS hook via DllMain(). Entrypoint DllMain()
+ * works on all Windows versions (Win32s, Win9x, WinNT) for all cases.
+ *
+ * Callbacks defined via PIMAGE_TLS_CALLBACK are not called on Win9x
+ * systems, and also they are not called on pre-Vista systems when
+ * DLL library is loaded at runtime by LoadLibrary() call.
+ */
+
+BOOL WINAPI
+DllMain (HANDLE hDllHandle, DWORD dwReason, LPVOID lpReserved)
+{
+  __dyn_tls_pthread (hDllHandle, dwReason, lpReserved);
+  return TRUE;
+}
+
+#else
+
 /* TLS-runtime section variable.  */
 
 /* Force a reference to _tls_used to make the linker create the TLS
@@ -561,6 +581,8 @@ static __attribute__((used))
 #endif
 WINPTHREADS_ATTRIBUTE((WINPTHREADS_SECTION(".CRT$XLF")))
 const PIMAGE_TLS_CALLBACK __xl_f = __dyn_tls_pthread;
+
+#endif
 
 /* Internal collect-once structure.  */
 typedef struct collect_once_t {
@@ -677,7 +699,18 @@ pthread_timechange_handler_np(void *dummy)
 static int
 __pthread_delay_np (const struct _timespec64 *interval)
 {
-  DWORD to = (!interval ? 0 : dwMilliSecs (_pthread_time_in_ms_from_timespec (interval)));
+  DWORD to = 0;
+
+  if (interval != NULL) {
+    unsigned __int64 ms = winpthreads_timespec_ms (interval);
+
+    if (ms >= INFINITE) {
+      to = INFINITE;
+    } else {
+      to = (DWORD) ms;
+    }
+  }
+
   struct _pthread_v *s = __pthread_self_lite ();
 
   if (!to)
@@ -1039,7 +1072,7 @@ __pthread_self_lite (void)
   t = (struct _pthread_v *) pop_pthread_mem ();
 
   /* If cannot initialize main thread, then the only thing we can do is return null pthread_t */
-  if (!__xl_f || !t)
+  if (!t)
     return 0;
 
   t->p_state = PTHREAD_DEFAULT_ATTR /*| PTHREAD_CREATE_DETACHED*/;
@@ -1524,8 +1557,6 @@ pthread_setcanceltype (int type, int *oldtype)
   return 0;
 }
 
-void _fpreset (void);
-
 #if defined(__i386__)
 /* Align ESP on 16-byte boundaries. */
 __attribute__((force_align_arg_pointer))
@@ -1536,7 +1567,12 @@ pthread_create_wrapper (void *args)
   unsigned rslt = 0;
   struct _pthread_v *tv = (struct _pthread_v *)args;
 
-  _fpreset();
+  /* POSIX requires the floating-point environment to be inherited from the
+     creating thread.  Windows starts every thread with its own defaults
+     (x87 precision set to 53 bits, which breaks long double), and a TLS
+     callback cannot change that on x64 because the initial context is
+     loaded after the callbacks run, so set it here.  */
+  fesetenv (&tv->fenv);
 
   pthread_mutex_lock (&mtx_pthr_locked);
   pthread_mutex_lock (&tv->p_clock);
@@ -1584,6 +1620,10 @@ pthread_create_wrapper (void *args)
          destroying it again in __dyn_tls_thread later on. */
       tv->p_clock = PTHREAD_MUTEX_INITIALIZER;
       tv->ended = 1;
+      /* GH #328 experiment: once ended, tv belongs to whoever joins or detaches
+         us, and may be recycled for a new thread before our DLL_THREAD_DETACH
+         runs -- so that callback must not find it through our TLS slot. */
+      TlsSetValue (_pthread_tls, NULL);
     }
   while (pthread_mutex_unlock (&mtx_pthr_locked) == 0)
    Sleep (0);
@@ -1652,6 +1692,8 @@ pthread_create (pthread_t *th, const pthread_attr_t *attr, void *(* func)(void *
       else
 	tv->sched.sched_priority = attr->param.sched_priority;
     }
+
+  fegetenv (&tv->fenv);
 
   /* Make sure tv->h has value of INVALID_HANDLE_VALUE */
   _ReadWriteBarrier();

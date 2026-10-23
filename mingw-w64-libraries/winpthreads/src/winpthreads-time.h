@@ -1,0 +1,61 @@
+/*
+   Copyright (c) 2026 mingw-w64 project
+
+   Permission is hereby granted, free of charge, to any person obtaining a
+   copy of this software and associated documentation files (the "Software"),
+   to deal in the Software without restriction, including without limitation
+   the rights to use, copy, modify, merge, publish, distribute, sublicense,
+   and/or sell copies of the Software, and to permit persons to whom the
+   Software is furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+   DEALINGS IN THE SOFTWARE.
+*/
+
+#ifndef WINPTHREADS_TIME_H
+#define WINPTHREADS_TIME_H
+
+#include "pthread_time.h"
+
+/**
+ * Get current system time, in milliseconds.
+ */
+unsigned __int64 winpthreads_system_time_ms (void);
+
+/**
+ * Get absolute time from `ts`, in millseconds.
+ */
+unsigned __int64 winpthreads_timespec_ms (const struct _timespec64 *ts);
+
+/**
+ * Get difference between current system time and absolute time `ts`,
+ * in milliseconds.
+ *
+ * The value is returned as an `unsigned`; it is expected to be used with
+ * functions such as `WaitFor*` and `Sleep`, which take `DWORD` values.
+ */
+unsigned winpthreads_wait_time_ms (const struct _timespec64 *ts);
+
+/**
+ * Get current time using some monotonic clock, in milliseconds.
+ *
+ * If `frequency` in not `NULL`, on the first call, that variable must be
+ * initialized to zero; this variable then can be passed to subsequent calls
+ * to this function.
+ */
+unsigned __int64 winpthreads_windows_time_ms (__int64 *frequency);
+
+/**
+ * Initialize time functions.
+ */
+void winpthreads_time_init (void);
+
+#endif /* WINPTHREADS_TIME_H */

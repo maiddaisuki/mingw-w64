@@ -96,6 +96,7 @@ testcase_progs = \
   t_assert \
   t_btowc \
   t_char16_t \
+  t_cpp_dtor_atexit_order \
   t_ctype \
   t_excpt_gcc_cpp \
   t_excpt_int_divzero \
@@ -105,6 +106,7 @@ testcase_progs = \
   t_exp_denormal \
   t_expm1 \
   t_fctptr \
+  t_fesetenv \
   t_findfirst \
   t_float  \
   t_fmod \
@@ -139,7 +141,9 @@ testcase_progs = \
   t_tls_dll \
   t_tls_dll_native \
   t_tls_dll_native_process_detach \
+  t_tls_exe_cxa_atexit_order \
   t_tls_exe_dtor \
+  t_tls_exe_dtor_atexit_order \
   t_tls_exe_dyn \
   t_tls_exe_native \
   t_tls_exe_native_process_detach \
@@ -206,9 +210,18 @@ testcase_progs += \
   t_wrongret
 endif
 
+# The CRT_fp*.o objects are only built for x86.
+if HOST_X86
+testcase_progs += \
+  t_fesetenv_fp10 \
+  t_fesetenv_fp4 \
+  t_fesetenv_fp8
+endif
+
 # Most of the tests are C programs, but there are some C++ tests as well.
 # For C++ targets, we have to explicitly specify source files so that
 # Automake does not assume .c extension.
+t_cpp_dtor_atexit_order_SOURCES = t_cpp_dtor_atexit_order.cpp
 t_intrin_cpp_SOURCES = t_intrin_cpp.cpp
 t_iostream_SOURCES = t_iostream.cpp
 t_isfine_SOURCES = t_isfine.cpp
@@ -220,6 +233,7 @@ t_wrongret_SOURCES = t_wrongret.cpp
 
 # On arm64ec, link all C++ tests statically; the toolchain (and the C++ DLL in
 # PATH) may be regular native aarch64, but we build and run arm64ec binaries.
+t_cpp_dtor_atexit_order_LDFLAGS = $(AM_LDFLAGS)
 t_intrin_cpp_LDFLAGS = $(AM_LDFLAGS)
 t_iostream_LDFLAGS = $(AM_LDFLAGS)
 t_isfine_LDFLAGS = $(AM_LDFLAGS)
@@ -230,6 +244,7 @@ t_trycatch_LDFLAGS = $(AM_LDFLAGS)
 t_wrongret_LDFLAGS = $(AM_LDFLAGS)
 
 if ARM64EC
+t_cpp_dtor_atexit_order_LDFLAGS += -static
 t_intrin_cpp_LDFLAGS += -static
 t_iostream_LDFLAGS += -static
 t_isfine_LDFLAGS += -static
@@ -243,6 +258,10 @@ endif
 # Test only for -static -lgcc
 t_global_ctors_LDFLAGS = $(AM_LDFLAGS) -static
 t_global_ctors_LDADD = @TARGET_LIBGCC_FILE_NAME@ $(LDADD)
+
+t_fesetenv_fp10_LDADD = -l:CRT_fp10.o $(LDADD)
+t_fesetenv_fp4_LDADD = -l:CRT_fp4.o $(LDADD)
+t_fesetenv_fp8_LDADD = -l:CRT_fp8.o $(LDADD)
 
 # Compile t_intrinc in C99 mode
 t_intrinc_CFLAGS = -std=c99 $(AM_CFLAGS)

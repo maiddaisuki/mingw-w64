@@ -31,9 +31,8 @@
 #include "pthread.h"
 /* internal header files */
 #include "misc.h"
+#include "winpthreads-time.h"
 
-void (WINAPI *_pthread_get_system_time_best_as_file_time) (LPFILETIME) = NULL;
-static ULONGLONG (WINAPI *_pthread_get_tick_count_64) (VOID);
 HRESULT (WINAPI *_pthread_set_thread_description) (HANDLE, PCWSTR) = NULL;
 BOOL (WINAPI *_pthread_get_handle_information) (HANDLE, LPDWORD) = NULL;
 
@@ -52,20 +51,10 @@ static void winpthreads_init(void)
         _pthread_get_handle_information =
             (BOOL (WINAPI *)(HANDLE, LPDWORD))(void*) GetProcAddress(mod, "GetHandleInformation");
 
-        _pthread_get_tick_count_64 =
-            (ULONGLONG (WINAPI *)(VOID))(void*) GetProcAddress(mod, "GetTickCount64");
-
         _pthread_set_thread_description =
             (HRESULT (WINAPI *)(HANDLE, PCWSTR))(void*) GetProcAddress(mod, "SetThreadDescription");
 
-        /* <1us precision on Windows 10 */
-        _pthread_get_system_time_best_as_file_time =
-            (void (WINAPI *)(LPFILETIME))(void*) GetProcAddress(mod, "GetSystemTimePreciseAsFileTime");
     }
-
-    if (!_pthread_get_system_time_best_as_file_time)
-        /* >15ms precision on Windows 10 */
-        _pthread_get_system_time_best_as_file_time = GetSystemTimeAsFileTime;
 
     /* Although SetThreadDescription lives in kernel32.dll, on Windows Server 2016,
      * Windows 10 LTSB 2016 and Windows 10 version 1607, it was only available in
@@ -80,6 +69,8 @@ static void winpthreads_init(void)
                 (HRESULT (WINAPI *)(HANDLE, PCWSTR))(void*) GetProcAddress(mod, "SetThreadDescription");
         }
     }
+
+    winpthreads_time_init();
 }
 #if defined(__GNUC__) && __GNUC__ >= 9 && !defined(__clang__)
 #pragma GCC diagnostic pop
@@ -102,57 +93,6 @@ extern const _PVFV __xc_t;
 const _PVFV __xc_t = winpthreads_init;
 #endif
 
-unsigned long long _pthread_time_in_ms(void)
-{
-    FILETIME ft;
-
-    GetSystemTimeAsFileTime(&ft);
-    return (((unsigned long long)ft.dwHighDateTime << 32) + ft.dwLowDateTime
-            - 0x19DB1DED53E8000ULL) / 10000ULL;
-}
-
-unsigned long long _pthread_time_in_ms_from_timespec(const struct _timespec64 *ts)
-{
-    unsigned long long t = (unsigned long long) ts->tv_sec * 1000LL;
-    /* The +999999 is here to ensure that the division always rounds up */
-    t += (unsigned long long) (ts->tv_nsec + 999999) / 1000000;
-
-    return t;
-}
-
-unsigned long long _pthread_rel_time_in_ms(const struct _timespec64 *ts)
-{
-    unsigned long long t1 = _pthread_time_in_ms_from_timespec(ts);
-    unsigned long long t2 = _pthread_time_in_ms();
-
-    /* Prevent underflow */
-    if (t1 < t2) return 0;
-    return t1 - t2;
-}
-
-static unsigned long long
-_pthread_get_tick_count (long long *frequency)
-{
-  if (_pthread_get_tick_count_64 != NULL)
-    return _pthread_get_tick_count_64 ();
-
-  LARGE_INTEGER freq, timestamp;
-
-  if (*frequency == 0)
-  {
-    if (QueryPerformanceFrequency (&freq))
-      *frequency = freq.QuadPart;
-    else
-      *frequency = -1;
-  }
-
-  if (*frequency > 0 && QueryPerformanceCounter (&timestamp))
-    return timestamp.QuadPart / (*frequency / 1000);
-
-  /* Fallback */
-  return GetTickCount ();
-}
-
 /* A wrapper around WaitForSingleObject() that ensures that
  * the wait function does not time out before the time
  * actually runs out. This is needed because WaitForSingleObject()
@@ -171,7 +111,7 @@ _pthread_wait_for_single_object (void *handle, unsigned long timeout)
   if (timeout == INFINITE || timeout == 0)
     return WaitForSingleObject ((HANDLE) handle, (DWORD) timeout);
 
-  start_time = _pthread_get_tick_count (&frequency);
+  start_time = winpthreads_windows_time_ms (&frequency);
   end_time = start_time + timeout;
   wait_time = timeout;
 
@@ -183,7 +123,7 @@ _pthread_wait_for_single_object (void *handle, unsigned long timeout)
     if (result != WAIT_TIMEOUT)
       break;
 
-    current_time = _pthread_get_tick_count (&frequency);
+    current_time = winpthreads_windows_time_ms (&frequency);
     if (current_time >= end_time)
       break;
 
@@ -211,7 +151,7 @@ _pthread_wait_for_multiple_objects (unsigned long count, void **handles, unsigne
   if (timeout == INFINITE || timeout == 0)
     return WaitForMultipleObjects ((DWORD) count, (HANDLE *) handles, all, (DWORD) timeout);
 
-  start_time = _pthread_get_tick_count (&frequency);
+  start_time = winpthreads_windows_time_ms (&frequency);
   end_time = start_time + timeout;
   wait_time = timeout;
 
@@ -223,7 +163,7 @@ _pthread_wait_for_multiple_objects (unsigned long count, void **handles, unsigne
     if (result != WAIT_TIMEOUT)
       break;
 
-    current_time = _pthread_get_tick_count (&frequency);
+    current_time = winpthreads_windows_time_ms (&frequency);
     if (current_time >= end_time)
       break;
 

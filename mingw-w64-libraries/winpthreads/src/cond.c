@@ -45,6 +45,7 @@
 #include "cond.h"
 #include "misc.h"
 #include "thread.h"
+#include "winpthreads-time.h"
 
 #include "pthread_compat.h"
 
@@ -436,11 +437,17 @@ pthread_cond_timedwait_impl (pthread_cond_t *c, pthread_mutex_t *external_mutex,
 
   if (rel == 0)
   {
-    dwr = dwMilliSecs(_pthread_rel_time_in_ms(t));
+    dwr = winpthreads_wait_time_ms(t);
   }
   else
   {
-    dwr = dwMilliSecs(_pthread_time_in_ms_from_timespec(t));
+    unsigned __int64 ms = winpthreads_timespec_ms(t);
+
+    if (ms >= INFINITE) {
+      dwr = INFINITE;
+    } else {
+      dwr = (DWORD) ms;
+    }
   }
 
 tryagain:

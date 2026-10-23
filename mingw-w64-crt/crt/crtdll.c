@@ -29,11 +29,11 @@ extern _PVFV __xc_z[];
 /* TLS initialization hook.  */
 const PIMAGE_TLS_CALLBACK __dyn_tls_init_callback __attribute__((common)); /* tentative */
 
-void (WINAPI *const __mingw_TLScallback_ptr)(HANDLE,DWORD,LPVOID) __attribute__((common)); /* tentative */
-const int __mingw_TLScallback_caller_provider = 1; /* crtdll.c calls __mingw_TLScallback_ptr */
+void (WINAPI *const __w64_mingwthr_callback_ptr)(HANDLE,DWORD,LPVOID) __attribute__((common)); /* tentative */
+const int __w64_mingwthr_callback_caller_provider = 1; /* crtdll.c calls __w64_mingwthr_callback_ptr */
 
-WINBOOL (WINAPI *const __mingw_atexit_tls_callback_ptr)(HANDLE,DWORD,LPVOID) __attribute__((common)); /* tentative */
-const int __mingw_atexit_tls_callback_caller_provider = 1; /* crtdll.c calls __mingw_atexit_tls_callback_ptr */
+WINBOOL (WINAPI *const __mingw_cxa_tls_callback_ptr)(HANDLE,DWORD,LPVOID) __attribute__((common)); /* tentative */
+const int __mingw_cxa_tls_callback_caller_provider = 1; /* crtdll.c calls __mingw_cxa_tls_callback_ptr */
 
 int (__cdecl *const __mingw_dll_atexit_table_func_ptr)(int) __attribute__((common)); /* tentative */
 
@@ -77,17 +77,17 @@ WINBOOL WINAPI _CRT_INIT (HANDLE hDllHandle, DWORD dwReason, LPVOID lpreserved)
 	  __native_startup_state = __initializing;
 	  
 	  _pei386_runtime_relocator ();
-	  if (__mingw_TLScallback_ptr != NULL)
-	    __mingw_TLScallback_ptr (hDllHandle, dwReason, lpreserved);
+	  if (__w64_mingwthr_callback_ptr != NULL)
+	    __w64_mingwthr_callback_ptr (hDllHandle, dwReason, lpreserved);
 	  if (__mingw_dll_atexit_table_func_ptr != NULL)
 	    {
 	      ret = __mingw_dll_atexit_table_func_ptr (0 /*init*/);
 	      if (ret != 0)
 		goto i__leave;
 	    }
-	  if (__mingw_atexit_tls_callback_ptr != NULL)
+	  if (__mingw_cxa_tls_callback_ptr != NULL)
 	    {
-	      if (! __mingw_atexit_tls_callback_ptr (hDllHandle, dwReason, lpreserved))
+	      if (! __mingw_cxa_tls_callback_ptr (hDllHandle, dwReason, lpreserved))
 		{
 		  ret = 1;
 		  goto i__leave;
@@ -108,8 +108,8 @@ i__leave:
 	}
       if (ret != 0)
 	{
-	  if (__mingw_atexit_tls_callback_ptr != NULL)
-	    __mingw_atexit_tls_callback_ptr (hDllHandle, DLL_PROCESS_DETACH, lpreserved);
+	  if (__mingw_cxa_tls_callback_ptr != NULL)
+	    __mingw_cxa_tls_callback_ptr (hDllHandle, DLL_PROCESS_DETACH, lpreserved);
 	  return FALSE;
 	}
       if (__dyn_tls_init_callback != NULL)
@@ -140,10 +140,10 @@ i__leave:
 	}
       else
 	{
-	  if (__mingw_TLScallback_ptr != NULL)
-	    __mingw_TLScallback_ptr (hDllHandle, dwReason, lpreserved);
-	  if (__mingw_atexit_tls_callback_ptr != NULL)
-	    __mingw_atexit_tls_callback_ptr (hDllHandle, dwReason, lpreserved);
+	  if (__w64_mingwthr_callback_ptr != NULL)
+	    __w64_mingwthr_callback_ptr (hDllHandle, dwReason, lpreserved);
+	  if (__mingw_cxa_tls_callback_ptr != NULL)
+	    __mingw_cxa_tls_callback_ptr (hDllHandle, dwReason, lpreserved);
 	  if (__mingw_dll_atexit_table_func_ptr != NULL)
 	    __mingw_dll_atexit_table_func_ptr (1 /*execute*/);
 	  __mingw_dll_do_global_dtors ();
@@ -161,11 +161,11 @@ i__leave:
     }
   else if (dwReason == DLL_THREAD_DETACH)
     {
-      if (__mingw_TLScallback_ptr != NULL)
-	 __mingw_TLScallback_ptr (hDllHandle, dwReason, lpreserved);
-      if (__mingw_atexit_tls_callback_ptr != NULL)
+      if (__w64_mingwthr_callback_ptr != NULL)
+	 __w64_mingwthr_callback_ptr (hDllHandle, dwReason, lpreserved);
+      if (__mingw_cxa_tls_callback_ptr != NULL)
 	{
-	  if (! __mingw_atexit_tls_callback_ptr (hDllHandle, dwReason, lpreserved))
+	  if (! __mingw_cxa_tls_callback_ptr (hDllHandle, dwReason, lpreserved))
 	    return FALSE;
 	}
     }
@@ -215,5 +215,9 @@ i__leave:
   __native_dllmain_reason = UINT_MAX;
   return retcode ;
 }
+
+/* not available for DLL builds, must be non-tentative to not be overridden */
+void (__cdecl *const __mingw_register_thread_local_exe_atexit_callback_ptr)(void) = NULL;
+extern const uintptr_t __mingw_register_thread_local_exe_atexit_callback_provider __attribute__((alias("__mingw_register_thread_local_exe_atexit_callback_ptr")));
 
 const char __mingw_module_is_dll = 1;

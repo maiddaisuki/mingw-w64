@@ -122,12 +122,13 @@ src_libmingw32=include/internal.h include/sect_attribs.h crt/seh_signal_dispatch
   crt/mingw_dll_ctors_dtors.c \
   crt/crtexewin.c     crt/dll_argv.c  crt/gccmain.c     crt/natstart.c  crt/pseudo-reloc-list.c  crt/wildcard.c \
   crt/charmax.c       crt/ucrtexewin.c crt/dllargv.c    crt/_newmode.c  crt/tlssup.c             crt/xncommod.c \
-  crt/cinitexe.c      crt/merr.c      crt/pesect.c      crt/udllargc.c  crt/xthdloc.c \
+  crt/cinitexe.c      crt/merr.c      crt/udllargc.c    crt/xthdloc.c \
   crt/mingw_custom.c  crt/mingw_helpers.c  \
   crt/pseudo-reloc.c  crt/udll_argv.c      \
   crt/usermatherr.c   \
   crt/xtxtmode.c      \
   crt/crtdll_atexit_register.c \
+  crt/tls_exe_atexit_callback.c \
   crt/tlsdyn.c        crt/tlsdtor.c        \
   crt/tlsthrd_register.c crt/tls_atexit_register.c \
   crt/tlsthrd.c       crt/tlsmthread.c     crt/tlsmcrt.c   \
@@ -182,6 +183,7 @@ src_msvcrt_common=\
   misc/__mingw_mbrtowc_cp.c \
   misc/__mingw_wcrtomb_cp.c \
   misc/_onexit.c \
+  misc/exit.c \
   misc/mbrlen.c \
   misc/mbrtowc.c \
   misc/mbsinit.c \
@@ -913,6 +915,8 @@ src_pre_msvcrt20=\
   misc/__p__winver.c \
   misc/__timezone.c \
   misc/__tzname.c \
+  misc/_beginthreadex.c \
+  misc/_endthreadex.c \
   stdio/_wfindfirst32.c \
   stdio/_wfindnext32.c \
   stdio/_wstat32.c \
@@ -1040,9 +1044,11 @@ src_pre_msvcr90=\
 src_pre_msvcr100=\
   misc/i386__XcptFilter.c \
   misc/i386__beginthread.c \
-  misc/i386__beginthreadex.c \
   misc/_invalid_parameter_noinfo_noreturn.c \
   misc/imaxdiv.c
+
+src_pre_msvcr100_post_msvcrt10=\
+  misc/i386__beginthreadex.c
 
 src_pre_msvcr110=\
   stdio/msvcr110pre_fstat32.c \
@@ -1127,6 +1133,7 @@ src_msvcrt20=\
   $(src_pre_msvcr80) \
   $(src_pre_msvcr90) \
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   misc/msvcrt20__getmainargs.c \
@@ -1139,6 +1146,7 @@ src_msvcrt40=\
   $(src_pre_msvcr80) \
   $(src_pre_msvcr90) \
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   misc/msvcrt__getmainargs.c \
@@ -1150,6 +1158,7 @@ src_msvcrtd=\
   $(src_pre_msvcr80) \
   $(src_pre_msvcr90) \
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   locale/___lc_codepage_func.c \
@@ -1162,6 +1171,7 @@ src_msvcr70=\
   $(src_pre_msvcr80) \
   $(src_pre_msvcr90) \
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   misc/__p__osplatform.c
@@ -1170,6 +1180,7 @@ src_msvcr71=\
   $(src_pre_msvcr80) \
   $(src_pre_msvcr90) \
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   misc/__p__osplatform.c
@@ -1177,6 +1188,7 @@ src_msvcr71=\
 src_msvcr80=\
   $(src_pre_msvcr90) \
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   $(src_pre_msvcr120_post_msvcr71) \
@@ -1184,6 +1196,7 @@ src_msvcr80=\
 
 src_msvcr90=\
   $(src_pre_msvcr100) \
+  $(src_pre_msvcr100_post_msvcrt10) \
   $(src_pre_msvcr110) \
   $(src_pre_msvcr120) \
   $(src_pre_msvcr120_post_msvcr71) \
@@ -1434,7 +1447,8 @@ if !W32API
 crt32_DATA = \
   lib32/crt1.o    lib32/crt2.o     lib32/crt1u.o   lib32/crt2u.o    lib32/dllcrt1.o    lib32/dllcrt2.o \
   lib32/CRT_fp8.o lib32/CRT_fp10.o lib32/txtmode.o lib32/binmode.o  lib32/crtbegin.o   lib32/crtend.o \
-  lib32/gcrt0.o   lib32/gcrt1.o    lib32/gcrt2.o   lib32/CRT_glob.o lib32/CRT_noglob.o
+  lib32/gcrt0.o   lib32/gcrt1.o    lib32/gcrt2.o   lib32/CRT_glob.o lib32/CRT_noglob.o \
+  lib32/CRT_fp4.o
 else
 crt32_DATA =
 endif
@@ -1858,7 +1872,8 @@ if !W32API
 crt64_DATA = \
   lib64/crt1.o    lib64/crt2.o     lib64/crt1u.o   lib64/crt2u.o   lib64/dllcrt1.o lib64/dllcrt2.o \
   lib64/CRT_fp8.o lib64/CRT_fp10.o lib64/txtmode.o lib64/binmode.o lib64/crtbegin.o lib64/crtend.o \
-  lib64/gcrt0.o   lib64/gcrt1.o    lib64/gcrt2.o   lib64/CRT_glob.o lib64/CRT_noglob.o
+  lib64/gcrt0.o   lib64/gcrt1.o    lib64/gcrt2.o   lib64/CRT_glob.o lib64/CRT_noglob.o \
+  lib64/CRT_fp4.o
 else
 crt64_DATA =
 endif
@@ -2222,7 +2237,7 @@ dx32dir=$(libarm32dir)
 if !W32API
 crt32_DATA = \
   libarm32/crt1.o    libarm32/crt2.o     libarm32/crt1u.o   libarm32/crt2u.o    libarm32/dllcrt1.o    libarm32/dllcrt2.o \
-  libarm32/CRT_fp8.o libarm32/txtmode.o  libarm32/binmode.o libarm32/crtbegin.o libarm32/crtend.o \
+  libarm32/txtmode.o libarm32/binmode.o libarm32/crtbegin.o libarm32/crtend.o \
   libarm32/gcrt0.o   libarm32/gcrt1.o    libarm32/gcrt2.o   libarm32/CRT_glob.o libarm32/CRT_noglob.o
 else
 crt32_DATA =
@@ -2532,7 +2547,7 @@ dx64dir=$(libarm64dir)
 if !W32API
 crt64_DATA = \
   libarm64/crt1.o    libarm64/crt2.o     libarm64/crt1u.o   libarm64/crt2u.o    libarm64/dllcrt1.o    libarm64/dllcrt2.o \
-  libarm64/CRT_fp8.o libarm64/txtmode.o  libarm64/binmode.o libarm64/crtbegin.o libarm64/crtend.o \
+  libarm64/txtmode.o libarm64/binmode.o libarm64/crtbegin.o libarm64/crtend.o \
   libarm64/gcrt0.o   libarm64/gcrt1.o    libarm64/gcrt2.o   libarm64/CRT_glob.o libarm64/CRT_noglob.o
 else
 crt64_DATA =
@@ -4570,6 +4585,7 @@ EXTRA_DIST += \
   crt/crtdll.c \
   crt/crtend.c \
   crt/crtexe.c \
+  crt/CRT_fp4.c \
   crt/CRT_fp8.c \
   crt/CRT_fp10.c \
   crt/CRT_glob.c \

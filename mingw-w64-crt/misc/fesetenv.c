@@ -7,8 +7,16 @@
 #include <internal.h>
 
 /* The FE_DFL_ENV macro is required by standard.
-   fesetenv will use the environment set at app startup.*/
-const fenv_t __mingw_fe_dfl_env = { 0, 0 };
+   fesetenv recognizes it by address and installs the environment set at
+   app startup.  Its contents encode that environment, so a copy works too.
+   On x86 it is defined next to _fpreset in CRT_fp*.c instead.  */
+#if defined(__arm64ec__)
+/* MXCSR 0x1f80.  */
+const fenv_t __mingw_fe_dfl_env = { 0x3f00003f, 0 };
+#elif !defined(__i386__) && !defined(__x86_64__)
+/* All exceptions masked, round to nearest.  */
+const fenv_t __mingw_fe_dfl_env = { 0x3f, 0 };
+#endif
 
 /* The C99 standard (7.6.9) allows us to define implementation-specific macros for
    different fp environments */
@@ -40,8 +48,26 @@ int fesetenv(const fenv_t *env)
     unsigned int x87_cw, cw, x87_stat, stat;
     unsigned int mask = ~0u;
 
-    if (!env->_Fe_ctl && !env->_Fe_stat) {
+    /* Compare the pointer, not the contents: an environment saved by
+       fegetenv with every exception unmasked, 64-bit precision and round
+       to nearest encodes as { 0, 0 }.  */
+    if (env == FE_DFL_ENV) {
         _fpreset();
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+        /* _fpreset only reinitializes the x87 unit.  Also put MXCSR back to
+           its startup value, 0x1f80: all exceptions masked, round to nearest,
+           no flush to zero or denormals are zero, and no flags set.  */
+        if (__mingw_has_sse()) {
+            cw = _MCW_EM | _RC_NEAR | _DN_SAVE;
+            stat = 0;
+            __mingw_setfp_sse(&cw, mask, &stat, ~0);
+        }
+#elif defined(__arm__) || (defined(__aarch64__) && !defined(__arm64ec__))
+        /* msvcrt.dll's _fpreset on aarch64 leaves the exception flags in
+           FPSR set, so clear the status flags explicitly.  */
+        stat = 0;
+        __mingw_setfp(NULL, 0, &stat, ~0);
+#endif
         return 0;
     }
 

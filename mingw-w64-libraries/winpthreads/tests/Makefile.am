@@ -37,11 +37,27 @@ check_PROGRAMS =               \
 	benchtests/benchtest3      \
 	benchtests/benchtest4      \
 	benchtests/benchtest5      \
-	clock/t_clock_getres       \
-	clock/t_clock_gettime      \
-	clock/t_clock_nanosleep    \
-	clock/t_clock_settime      \
-	clock/t_nanosleep          \
+	clock/clock_getres-realtime                    \
+	clock/clock_getres-monotonic                   \
+	clock/clock_getres-process_cputime             \
+	clock/clock_getres-thread_cputime              \
+	clock/clock_gettime-realtime                   \
+	clock/clock_gettime-monotonic                  \
+	clock/clock_gettime-process_cputime            \
+	clock/clock_gettime-thread_cputime             \
+	clock/clock_nanosleep-realtime-absolute        \
+	clock/clock_nanosleep-realtime-relative        \
+	clock/clock_nanosleep-monotonic-absolute       \
+	clock/clock_nanosleep-monotonic-relative       \
+	clock/clock_nanosleep-process_cputime-absolute \
+	clock/clock_nanosleep-process_cputime-relative \
+	clock/clock_nanosleep-thread_cputime-absolute  \
+	clock/clock_nanosleep-thread_cputime-relative  \
+	clock/clock_settime-realtime                   \
+	clock/clock_settime-monotonic                  \
+	clock/clock_settime-process_cputime            \
+	clock/clock_settime-thread_cputime             \
+	clock/nanosleep                                \
 	exceptions/exception1      \
 	exceptions/exception2      \
 	exceptions/exception3      \
@@ -85,6 +101,7 @@ check_PROGRAMS =               \
 	pthread_create/create1     \
 	pthread_create/create2     \
 	pthread_create/create3     \
+	pthread_create/fenv-inherit \
 	pthread_exit/exit2         \
 	pthread_exit/exit3         \
 	pthread_exit/exit4         \
@@ -110,6 +127,11 @@ check_PROGRAMS =               \
 	pthread_misc/stress1       \
 	pthread_misc/valid1        \
 	pthread_misc/valid2        \
+	pthread_mutex/attr-prioceiling                 \
+	pthread_mutex/attr-protocol                    \
+	pthread_mutex/attr-pshared                     \
+	pthread_mutex/attr-robust                      \
+	pthread_mutex/attr-type                        \
 	pthread_mutex/default-basic                    \
 	pthread_mutex/default-lock-recursive           \
 	pthread_mutex/default-static                   \
@@ -143,6 +165,30 @@ check_PROGRAMS =               \
 	pthread_mutex/recursive-trylock                \
 	pthread_mutex/recursive-trylock-recursive      \
 	pthread_mutex/recursive-unlock                 \
+	pthread_mutex/robust-errorcheck-basic               \
+	pthread_mutex/robust-errorcheck-lock-recursive      \
+	pthread_mutex/robust-errorcheck-state-recoverable   \
+	pthread_mutex/robust-errorcheck-state-unrecoverable \
+	pthread_mutex/robust-errorcheck-timedlock           \
+	pthread_mutex/robust-errorcheck-trylock             \
+	pthread_mutex/robust-errorcheck-trylock-recursive   \
+	pthread_mutex/robust-errorcheck-unlock              \
+	pthread_mutex/robust-normal-basic                   \
+	pthread_mutex/robust-normal-lock-recursive          \
+	pthread_mutex/robust-normal-state-recoverable       \
+	pthread_mutex/robust-normal-state-unrecoverable     \
+	pthread_mutex/robust-normal-timedlock               \
+	pthread_mutex/robust-normal-trylock                 \
+	pthread_mutex/robust-normal-trylock-recursive       \
+	pthread_mutex/robust-normal-unlock                  \
+	pthread_mutex/robust-recursive-basic                \
+	pthread_mutex/robust-recursive-lock-recursive       \
+	pthread_mutex/robust-recursive-state-recoverable    \
+	pthread_mutex/robust-recursive-state-unrecoverable  \
+	pthread_mutex/robust-recursive-timedlock            \
+	pthread_mutex/robust-recursive-trylock              \
+	pthread_mutex/robust-recursive-trylock-recursive    \
+	pthread_mutex/robust-recursive-unlock               \
 	pthread_once/once1         \
 	pthread_once/once2         \
 	pthread_once/once3         \
