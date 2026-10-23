@@ -226,7 +226,7 @@ _CRT_END_C_HEADER
 #endif
 #if defined(__i386__) /* i386 setjmp macro always stores SEH frame info for unwind */
 #  define setjmp(BUF) _setjmp3((BUF), 2, NULL /*UnwindFunc*/, -1 /*TryLevel*/)
-#elif defined(__x86_64__) /* amd64 requires current stack pointer address */
+#elif defined(__x86_64__) && !defined(__arm64ec__) /* amd64 requires current stack pointer address */
 #  if defined(_INC_SETJMPEX)
 #    if (defined(__GNUC__) && __GNUC__ >= 14) || (defined(__clang__) && __clang_major__ >= 22)
 #      define setjmp(BUF) _setjmpex((BUF), __builtin_stack_address())
@@ -242,7 +242,7 @@ _CRT_END_C_HEADER
 #  else
 #    define setjmp(BUF) _setjmp((BUF), NULL)
 #  endif
-#elif defined(__arm__) /* arm32 requires stack pointer address from the function entry point */
+#elif defined(__arm__) || defined(__arm64ec__) /* arm32 and arm64ec requires stack pointer address from the function entry point */
 #  if defined(_INC_SETJMPEX)
 #    define setjmp(BUF) _setjmpex((BUF), __builtin_sponentry())
 #  elif defined(__SEH__) && !defined(__USE_MINGW_SETJMP_NON_SEH)
