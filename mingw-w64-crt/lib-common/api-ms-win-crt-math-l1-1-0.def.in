@@ -167,56 +167,56 @@ F_LD64(atanl == atan)
 atanh
 atanhf
 F_LD64(atanhl) ; Can't use long double functions from the CRT on x86
-cabs
-cabsf
+; cabs
+; cabsf
 F_LD64(cabsl) ; Can't use long double functions from the CRT on x86
-cacos
-cacosf
-cacosh
-cacoshf
+; cacos
+; cacosf
+; cacosh
+; cacoshf
 F_LD64(cacoshl) ; Can't use long double functions from the CRT on x86
 F_LD64(cacosl) ; Can't use long double functions from the CRT on x86
-carg
-cargf
+; carg
+; cargf
 F_LD64(cargl) ; Can't use long double functions from the CRT on x86
-casin
-casinf
-casinh
-casinhf
+; casin
+; casinf
+; casinh
+; casinhf
 F_LD64(casinhl) ; Can't use long double functions from the CRT on x86
 F_LD64(casinl) ; Can't use long double functions from the CRT on x86
-catan
-catanf
-catanh
-catanhf
+; catan
+; catanf
+; catanh
+; catanhf
 F_LD64(catanhl) ; Can't use long double functions from the CRT on x86
 F_LD64(catanl) ; Can't use long double functions from the CRT on x86
 cbrt
 cbrtf
 F_LD64(cbrtl) ; Can't use long double functions from the CRT on x86
-ccos
-ccosf
-ccosh
-ccoshf
+; ccos
+; ccosf
+; ccosh
+; ccoshf
 F_LD64(ccoshl) ; Can't use long double functions from the CRT on x86
 F_LD64(ccosl) ; Can't use long double functions from the CRT on x86
 ceil
 F_NON_I386(ceilf)
 F_LD64(ceill == ceil)
-cexp
-cexpf
+; cexp
+; cexpf
 F_LD64(cexpl) ; Can't use long double functions from the CRT on x86
-cimag
-cimagf
+; cimag
+; cimagf
 F_LD64(cimagl) ; Can't use long double functions from the CRT on x86
-clog
-clog10
-clog10f
+; clog
+; clog10
+; clog10f
 F_LD64(clog10l) ; Can't use long double functions from the CRT on x86
-clogf
+; clogf
 F_LD64(clogl) ; Can't use long double functions from the CRT on x86
-conj
-conjf
+; conj
+; conjf
 F_LD64(conjl) ; Can't use long double functions from the CRT on x86
 copysign
 copysignf
@@ -226,28 +226,28 @@ F_NON_I386(cosf)
 F_LD64(cosl == cos)
 cosh
 F_NON_I386(coshf)
-cpow
-cpowf
+; cpow
+; cpowf
 F_LD64(cpowl) ; Can't use long double functions from the CRT on x86
-cproj
-cprojf
+; cproj
+; cprojf
 F_LD64(cprojl) ; Can't use long double functions from the CRT on x86
-creal
-crealf
+; creal
+; crealf
 F_LD64(creall) ; Can't use long double functions from the CRT on x86
-csin
-csinf
-csinh
-csinhf
+; csin
+; csinf
+; csinh
+; csinhf
 F_LD64(csinhl) ; Can't use long double functions from the CRT on x86
 F_LD64(csinl) ; Can't use long double functions from the CRT on x86
-csqrt
-csqrtf
+; csqrt
+; csqrtf
 F_LD64(csqrtl) ; Can't use long double functions from the CRT on x86
-ctan
-ctanf
-ctanh
-ctanhf
+; ctan
+; ctanf
+; ctanh
+; ctanhf
 F_LD64(ctanhl) ; Can't use long double functions from the CRT on x86
 F_LD64(ctanl) ; Can't use long double functions from the CRT on x86
 erf
@@ -290,7 +290,7 @@ hypot
 ilogb
 ilogbf
 F_LD64(ilogbl) ; Can't use long double functions from the CRT on x86
-ldexp
+; ldexp
 ; The UCRT lgamma functions don't set/provide the signgam variable like
 ; the mingw ones do. Therefore prefer the libmingwex version instead.
 lgamma DATA
@@ -325,8 +325,8 @@ lroundf
 F_LD64(lroundl) ; Can't use long double functions from the CRT on x86
 modf
 F_NON_I386(modff)
-nan
-nanf
+; nan
+; nanf
 F_LD64(nanl) ; Can't use long double functions from the CRT on x86
 nearbyint
 nearbyintf
@@ -357,11 +357,11 @@ F_LD64(rintl) ; Can't use long double functions from the CRT on x86
 round
 roundf
 F_LD64(roundl) ; Can't use long double functions from the CRT on x86
-scalbln
-scalblnf
+; scalbln
+; scalblnf
 F_LD64(scalblnl) ; Can't use long double functions from the CRT on x86
-scalbn
-scalbnf
+; scalbn
+; scalbnf
 F_LD64(scalbnl) ; Can't use long double functions from the CRT on x86
 sin
 F_NON_I386(sinf)
