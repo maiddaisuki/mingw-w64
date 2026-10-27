@@ -6,6 +6,8 @@
 
 #ifdef __arm64ec__
 
+unsigned long long __mingw_mxcsr_to_fpcsr(unsigned mxcsr);
+
 unsigned long long __mingw_mxcsr_to_fpcsr(unsigned mxcsr)
 {
   unsigned fpsr = 0;
