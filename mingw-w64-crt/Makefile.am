@@ -176,13 +176,21 @@ src_libws2_32=libsrc/ws2_32.c \
 src_c11_threads=\
   threads/threads_internal.h \
   threads/__mingw_abs_timespec64_to_rel_uintms.c \
+  threads/__mingw_cnd_timedwait_unguarded.c \
   threads/__mingw_mtx_timedlock_unguarded.c \
   threads/__mingw_mtx_unlock_unguarded.c \
+  threads/_cnd_timedwait32.c \
+  threads/_cnd_timedwait64.c \
   threads/_mtx_timedlock32.c \
   threads/_mtx_timedlock64.c \
   threads/_thrd_sleep32.c \
   threads/_thrd_sleep64.c \
   threads/call_once.c \
+  threads/cnd_broadcast.c \
+  threads/cnd_destroy.c \
+  threads/cnd_init.c \
+  threads/cnd_signal.c \
+  threads/cnd_wait.c \
   threads/mtx_destroy.c \
   threads/mtx_init.c \
   threads/mtx_lock.c \
