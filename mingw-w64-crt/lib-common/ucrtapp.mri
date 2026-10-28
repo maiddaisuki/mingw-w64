@@ -1,5 +1,6 @@
 CREATE libucrtapp.a
 ADDLIB libucrt_common.a
 ADDLIB libucrtapp_extra.a
+ADDLIB libc11_threads.a
 SAVE
 END

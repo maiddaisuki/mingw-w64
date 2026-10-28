@@ -1,5 +1,6 @@
 CREATE libucrt.a
 ADDLIB libucrt_common.a
 ADDLIB libapi-ms-win-crt-private-l1-1-0.a
+ADDLIB libc11_threads.a
 SAVE
 END
