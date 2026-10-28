@@ -38,7 +38,10 @@
 #include "thread.h"
 #include "winpthreads-time.h"
 
-int do_sema_b_wait_intern (HANDLE sema, int nointerrupt, DWORD timeout);
+/**
+ * Defined in cond.c.
+ */
+int do_sema_b_wait_intern (HANDLE sema, int flags, const struct _timespec64 *timeout);
 
 static int
 sem_result (int res)
@@ -177,7 +180,7 @@ clean_wait_sem (void *s)
   if (sem_std_enter (p->p, &sv, 0) != 0)
     return;
 
-  if (WaitForSingleObject (sv->s, 0) != WAIT_OBJECT_0)
+  if (winpthreads_wait (sv->s, 0, CLOCK_MONOTONIC, WINPTHREADS_WAIT_TIMEOUT_ZERO, NULL) != wait_succeeded)
     InterlockedIncrement (&sv->value);
   else if (p->ret)
     p->ret[0] = 0;
@@ -207,8 +210,12 @@ sem_wait (sem_t *sem)
     return 0;
   else
     {
+      /**
+       * `sem_wait` is a cancellation point.
+       */
+      int waitFlags = WINPTHREADS_WAIT_CANCELLATION_NOTIFICATION | WINPTHREADS_WAIT_TIMEOUT_ABSTIME;
       pthread_cleanup_push (clean_wait_sem, (void *) &arg);
-      ret = do_sema_b_wait_intern (semh, 2, INFINITE);
+      ret = do_sema_b_wait_intern (semh, waitFlags, WINPTHREADS_WAIT_TIMEOUT_INDEFINITE);
       pthread_cleanup_pop (ret);
       if (ret == EINVAL)
         return 0;
@@ -225,14 +232,12 @@ static int
 __sem_timedwait (sem_t *sem, const struct _timespec64 *t)
 {
   int cur_v, ret = 0;
-  DWORD dwr;
   HANDLE semh;
   _sem_t *sv;
   struct sSemTimedWait arg;
 
   if (!t)
     return sem_wait (sem);
-  dwr = winpthreads_wait_time_ms (t);
 
   if (sem_std_enter (sem, &sv, 1) != 0)
     return -1;
@@ -248,8 +253,12 @@ __sem_timedwait (sem_t *sem, const struct _timespec64 *t)
     return 0;
   else
     {
+      /**
+       * `sem_timedwait` is a cancellation point.
+       */
+      int waitFlags = WINPTHREADS_WAIT_CANCELLATION_NOTIFICATION | WINPTHREADS_WAIT_TIMEOUT_ABSTIME;
       pthread_cleanup_push (clean_wait_sem, (void *) &arg);
-      ret = do_sema_b_wait_intern (semh, 2, dwr);
+      ret = do_sema_b_wait_intern (semh, waitFlags, t);
       pthread_cleanup_pop (ret);
       if (ret == EINVAL)
         return 0;
