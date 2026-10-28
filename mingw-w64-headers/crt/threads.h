@@ -19,15 +19,15 @@ _CRT_BEGIN_C_HEADER
 /* mtx */
 
 enum {
-  mtx_plain = 0,
-  mtx_recursive = 1,
-  mtx_timed = 2,
+  mtx_plain = 0 << 1, /* 0 */
+  mtx_timed = 1 << 1, /* 2 */
+  mtx_recursive = 1 << 0, /* 1 */
 };
 
 typedef struct {
   __UINTPTR_TYPE__ _Type;
-  void *_Ptr;
-  void *_Cv;
+  void *_Ptr; /* SRWLOCK _Lock */
+  void *_Cv; /* CONDITION_VARIABLE _Cv */
   unsigned _Owner;
   unsigned _Cnt;
 } mtx_t;
@@ -43,7 +43,7 @@ int __cdecl mtx_unlock(mtx_t *_Mtx);
 /* cnd */
 
 typedef struct {
-  void *_Ptr;
+  void *_Ptr; /* CONDITION_VARIABLE _Cv */
 } cnd_t;
 
 int __cdecl cnd_broadcast(cnd_t *_Cond);
@@ -57,7 +57,7 @@ int __cdecl cnd_wait(cnd_t *_Cond, mtx_t *_Mtx);
 /* thrd */
 
 typedef struct {
-  void *_Handle;
+  void *_Handle; /* HANDLE _Handle */
   unsigned _Tid;
 } thrd_t;
 
@@ -86,7 +86,7 @@ void __cdecl thrd_yield(void);
 #define TSS_DTOR_ITERATIONS 1
 
 typedef struct {
-  unsigned _Idx;
+  unsigned _Idx; /* unsigned _Idx:10; unsigned _Reserved:22; */
 } tss_t;
 
 typedef void (__cdecl*tss_dtor_t)(void*);
@@ -101,7 +101,7 @@ int __cdecl tss_set(tss_t _Key, void *_Val);
 #define ONCE_FLAG_INIT { NULL }
 
 typedef struct {
-  void *_Opaque;
+  void *_Opaque; /* INIT_ONCE _InitOnce */
 } once_flag;
 
 void __cdecl call_once(once_flag *_Flag, void(__cdecl*_Func)(void));
