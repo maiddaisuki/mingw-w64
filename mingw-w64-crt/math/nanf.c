@@ -5,8 +5,12 @@
  */
 
 #include <math.h>
+#include "fp_consts.h"
 
-float nanf(const char * tagp)
+extern const union _ieee_rep __QNANF;
+
+/* FIXME */
+float nanf(const char * tagp __attribute__((unused)))
 {
-  return __builtin_nanf(tagp);
+  return __QNANF.float_val;
 }

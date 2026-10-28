@@ -5,8 +5,12 @@
  */
 
 #include <math.h>
+#include "fp_consts.h"
 
-long double nanl(const char * tagp)
+extern const union _ieee_rep __QNANL;
+
+/* FIXME */
+long double nanl(const char * tagp __attribute__((unused)))
 {
-  return __builtin_nanl(tagp);
+  return __QNANL.ldouble_val;
 }

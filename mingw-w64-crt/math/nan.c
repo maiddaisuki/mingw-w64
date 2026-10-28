@@ -5,8 +5,12 @@
  */
 
 #include <math.h>
+#include "fp_consts.h"
 
-double nan(const char * tagp)
+extern const union _ieee_rep __QNAN;
+
+/* FIXME */
+double nan(const char * tagp __attribute__((unused)))
 {
-  return __builtin_nan(tagp);
+  return __QNAN.double_val;
 }
