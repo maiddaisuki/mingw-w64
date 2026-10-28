@@ -289,6 +289,15 @@ typedef enum {
  * usually by simply calling `pthread_testcancel`.
  */
 #define WINPTHREADS_WAIT_CANCELLATION_NOTIFICATION ((int) 0x00000001)
+/**
+ * When this flag is set`, the wait will be interrupted if an APC was queued
+ * on the calling thread.
+ *
+ * This flag has no effect if the `timeout` argument is
+ * `WINPTHREADS_WAIT_TIMEOUT_ZERO`; the thread must be in the wait state
+ * in order for APC to be queued.
+ */
+#define WINPTHREADS_WAIT_ALERTABLE ((int) 0x00000002)
 
 /**
  * The `timeout` argument to `winpthreads_wait` specifies absolute time

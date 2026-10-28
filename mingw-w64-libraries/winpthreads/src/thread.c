@@ -1908,6 +1908,10 @@ typedef enum {
    * The calling thread recieved cancellation notification.
    */
   wait_interrupt_cancellation_notification,
+  /**
+   * An APC was queued on the calling thread.
+   */
+  wait_interrupt_alerted,
 } winpthreads_wait_interrupts;
 
 /**
@@ -1978,9 +1982,15 @@ static void WinpthreadsWait (winpthreads_wait_state *waitState) {
    * Simply sleep if there are no handles to wait on.
    */
   if (waitState->Count == 0) {
-    Sleep (waitState->Timeout);
-    waitState->Status = wait_timeout_expired;
-    return;
+    switch (SleepEx (waitState->Timeout, TRUE)) {
+      case WAIT_IO_COMPLETION:
+        waitState->Status    = wait_interrupted;
+        waitState->Interrupt = wait_interrupt_alerted;
+        return;
+      default:
+        waitState->Status = wait_timeout_expired;
+        return;
+    }
   }
 
   /**
@@ -2002,10 +2012,19 @@ static void WinpthreadsWait (winpthreads_wait_state *waitState) {
    * You cannot pass the same handle, original or duplicated, in the same call
    * to `WaitForMultipleObjects[Ex]` multiple times on all Windows versions.
    */
-  unsigned waitResult = WaitForMultipleObjects (waitState->Count, waitState->Handle, FALSE, waitState->Timeout);
+  unsigned waitResult = WaitForMultipleObjectsEx (waitState->Count, waitState->Handle, FALSE, waitState->Timeout, TRUE);
 
   if (waitResult == WAIT_TIMEOUT) {
     waitState->Status = wait_timeout_expired;
+    return;
+  }
+
+  /**
+   * APC was queued on the calling thread.
+   */
+  if (waitResult == WAIT_IO_COMPLETION) {
+    waitState->Status    = wait_interrupted;
+    waitState->Interrupt = wait_interrupt_alerted;
     return;
   }
 
@@ -2075,12 +2094,22 @@ static int WinpthreadsWaitInterrupt (winpthreads_wait_state *waitState, int flag
 
       WinpthreadsWaitStateRemove (waitState, wait_object_cancellation_notification);
       break;
+    /**
+     * APC was queued on the calling thread.
+     *
+     * Only notify caller if explicitly requested; otherwise, we just continue
+     * waiting unless timeout has expired.
+     */
+    case wait_interrupt_alerted:
+      if (flags & WINPTHREADS_WAIT_ALERTABLE) {
+        return 1;
+      }
+      break;
     default:
       UNREACHABLE ();
   }
 
   return 0;
-  UNREFERENCED_PARAMETER (flags);
 }
 
 WINPTHREADS_ATTRIBUTE ((noinline))
