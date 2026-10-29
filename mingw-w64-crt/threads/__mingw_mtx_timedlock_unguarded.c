@@ -23,17 +23,16 @@ int __cdecl __mingw_mtx_timedlock_unguarded(mtx_t *mtx, const struct _timespec64
       return thrd_error;
     mtx->_Cnt++;
   } else {
-    while (mtx->_Owner != 0) {
+    while (!MTX_TRY_CHANGE_OWNER_UNGUARDED(mtx, cur_thread_id)) {
       unsigned timeout = INFINITE;
       if (ts) {
         int ret = __mingw_abs_timespec64_to_rel_uintms(ts, &timeout);
         if (ret != thrd_success)
           return ret;
       }
-      if (!SleepConditionVariableSRW(cv, lock, timeout, 0))
+      if (!WAIT_FOR_MTX_CV_UNGUARDED(cv, lock, timeout, 0))
         return GetLastError() == ERROR_TIMEOUT ? thrd_timedout : thrd_error;
     }
-    mtx->_Owner = cur_thread_id;
     mtx->_Cnt = 1;
   }
   return thrd_success;

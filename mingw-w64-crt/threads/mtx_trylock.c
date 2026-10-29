@@ -7,6 +7,7 @@
  */
 
 #include <threads.h>
+#include "threads_internal.h" /* for MTX_TRY_CHANGE_OWNER_UNGUARDED(), ACQUIRE_MTX_LOCK_FOR_UNGUARDED_OPS() and RELEASE_MTX_LOCK_FOR_UNGUARDED_OPS() */
 #include <windows.h> /* for AcquireSRWLockExclusive(), ReleaseSRWLockExclusive() and GetCurrentThreadId() */
 
 int __cdecl mtx_trylock(mtx_t *mtx)
@@ -15,7 +16,7 @@ int __cdecl mtx_trylock(mtx_t *mtx)
   int ret;
   SRWLOCK *lock = (SRWLOCK *)&mtx->_Ptr;
   DWORD cur_thread_id = GetCurrentThreadId();
-  AcquireSRWLockExclusive(lock);
+  ACQUIRE_MTX_LOCK_FOR_UNGUARDED_OPS(lock);
 
   if (mtx->_Owner == cur_thread_id) {
     if (!(mtx->_Type & mtx_recursive)) {
@@ -25,15 +26,14 @@ int __cdecl mtx_trylock(mtx_t *mtx)
       ret = thrd_success;
     }
   } else {
-    if (mtx->_Owner != 0) {
+    if (!MTX_TRY_CHANGE_OWNER_UNGUARDED(mtx, cur_thread_id)) {
       ret = thrd_busy;
     } else {
-      mtx->_Owner = cur_thread_id;
       mtx->_Cnt = 1;
       ret = thrd_success;
     }
   }
 
-  ReleaseSRWLockExclusive(lock);
+  RELEASE_MTX_LOCK_FOR_UNGUARDED_OPS(lock);
   return ret;
 }

@@ -19,6 +19,6 @@ int __cdecl __mingw_mtx_unlock_unguarded(mtx_t *mtx)
     return thrd_error;
   if (--mtx->_Cnt == 0)
     mtx->_Owner = 0;
-  WakeConditionVariable(cv);
+  SIGNAL_MTX_CV_UNGUARDED(cv);
   return thrd_success;
 }

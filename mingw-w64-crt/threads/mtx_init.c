@@ -7,6 +7,7 @@
  */
 
 #include <threads.h>
+#include "threads_internal.h" /* for INITIALIZE_MTX_LOCK_AND_CV() */
 #include <windows.h> /* for InitializeConditionVariable() and InitializeSRWLock() */
 
 int mtx_init(mtx_t *mtx, int type)
@@ -17,8 +18,8 @@ int mtx_init(mtx_t *mtx, int type)
   CONDITION_VARIABLE *cv = (CONDITION_VARIABLE *)&mtx->_Cv;
   /* vcruntime140_threads.dll mtx_init does not validate type */
   mtx->_Type = type;
-  InitializeSRWLock(lock);
-  InitializeConditionVariable(cv);
+  if (!INITIALIZE_MTX_LOCK_AND_CV(lock, cv))
+    return thrd_error;
   mtx->_Owner = 0;
   mtx->_Cnt = 0;
   return thrd_success;

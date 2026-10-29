@@ -175,6 +175,7 @@ src_libws2_32=libsrc/ws2_32.c \
 
 src_c11_threads=\
   threads/threads_internal.h \
+  threads/prevista_fallbacks.c \
   threads/__mingw_abs_timespec64_to_rel_uintms.c \
   threads/__mingw_cnd_timedwait_unguarded.c \
   threads/__mingw_mtx_timedlock_unguarded.c \
