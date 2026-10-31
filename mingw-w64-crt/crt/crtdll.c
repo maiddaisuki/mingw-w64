@@ -217,7 +217,8 @@ i__leave:
 }
 
 /* not available for DLL builds, must be non-tentative to not be overridden */
-void (__cdecl *const __mingw_register_thread_local_exe_atexit_callback_ptr)(void) = NULL;
-extern const uintptr_t __mingw_register_thread_local_exe_atexit_callback_provider __attribute__((alias("__mingw_register_thread_local_exe_atexit_callback_ptr")));
+static const uintptr_t disabled_symbols = 0;
+extern const uintptr_t __mingw_register_thread_local_exe_atexit_callback_ptr __attribute__((alias("disabled_symbols")));
+extern const uintptr_t __mingw_register_thread_local_exe_atexit_callback_provider __attribute__((alias("disabled_symbols")));
 
 const char __mingw_module_is_dll = 1;
