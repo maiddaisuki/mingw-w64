@@ -12,5 +12,9 @@ extern const union _ieee_rep __QNANL;
 /* FIXME */
 long double nanl(const char * tagp __attribute__((unused)))
 {
+#if __SIZEOF_LONG_DOUBLE__ == __SIZEOF_DOUBLE__
+  return nan("");
+#else
   return __QNANL.ldouble_val;
+#endif
 }
