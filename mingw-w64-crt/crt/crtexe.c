@@ -343,4 +343,10 @@ int __cdecl atexit (_PVFV func)
     return _crt_atexit(func);
 }
 
+/* not available for EXE builds, must be non-tentative to not be overridden */
+static const uintptr_t disabled_symbols = 0;
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+extern const uintptr_t __mingw_tss_get_vals_dll_tls_ptr __attribute__((alias("disabled_symbols")));
+#endif
+
 const char __mingw_module_is_dll = 0;

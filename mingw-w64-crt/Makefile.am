@@ -181,6 +181,7 @@ src_c11_threads=\
   threads/__mingw_cnd_timedwait_unguarded.c \
   threads/__mingw_mtx_timedlock_unguarded.c \
   threads/__mingw_mtx_unlock_unguarded.c \
+  threads/__mingw_tss_get_vals_dll_tls_ptr.c \
   threads/__mingw_tss_get_vals_pe_tls_ptr.c \
   threads/_cnd_timedwait32.c \
   threads/_cnd_timedwait64.c \

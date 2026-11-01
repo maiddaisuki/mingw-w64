@@ -8,6 +8,9 @@
 
 #include <threads.h>
 
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+extern void **(__cdecl *const __mingw_tss_get_vals_dll_tls_ptr)(void);
+#endif
 extern void **(__cdecl *const __mingw_tss_get_vals_pe_tls_ptr)(void);
 
 #if defined(__i386__)
@@ -16,6 +19,11 @@ extern int __mingw_tss_dtors_supported;
 
 static void **tss_get_vals_ptr(void)
 {
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+  /* crtdll.c and crtexe.c ensures that exactly one of these pointers is non-NULL */
+  if (__mingw_tss_get_vals_dll_tls_ptr)
+    return __mingw_tss_get_vals_dll_tls_ptr();
+#endif
   return __mingw_tss_get_vals_pe_tls_ptr();
 }
 

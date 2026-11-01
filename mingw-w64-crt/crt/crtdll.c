@@ -41,6 +41,10 @@ const int __mingw_tss_run_dtors_caller_provider = 1; /* crtdll.c calls __mingw_t
 const int __mingw_tss_dtors_supported = 1; /* crtdll.c always calls __mingw_tss_run_dtors_ptr */
 #endif
 
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+WINBOOL (WINAPI *const __mingw_tss_callback_ptr)(HANDLE,DWORD,LPVOID) __attribute__((common)); /* tentative */
+#endif
+
 int (__cdecl *const __mingw_dll_atexit_table_func_ptr)(int) __attribute__((common)); /* tentative */
 
 static int __proc_attached = 0;
@@ -83,6 +87,16 @@ WINBOOL WINAPI _CRT_INIT (HANDLE hDllHandle, DWORD dwReason, LPVOID lpreserved)
 	  __native_startup_state = __initializing;
 	  
 	  _pei386_runtime_relocator ();
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+	  if (__mingw_tss_callback_ptr != NULL)
+	    {
+	      if (! __mingw_tss_callback_ptr (hDllHandle, dwReason, lpreserved))
+		{
+		  ret = 1;
+		  goto i__leave;
+		}
+	    }
+#endif
 	  if (__w64_mingwthr_callback_ptr != NULL)
 	    __w64_mingwthr_callback_ptr (hDllHandle, dwReason, lpreserved);
 	  if (__mingw_dll_atexit_table_func_ptr != NULL)
@@ -116,6 +130,10 @@ i__leave:
 	{
 	  if (__mingw_cxa_tls_callback_ptr != NULL)
 	    __mingw_cxa_tls_callback_ptr (hDllHandle, DLL_PROCESS_DETACH, lpreserved);
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+	  if (__mingw_tss_callback_ptr != NULL)
+	    __mingw_tss_callback_ptr (hDllHandle, DLL_PROCESS_DETACH, lpreserved);
+#endif
 	  return FALSE;
 	}
       if (__dyn_tls_init_callback != NULL)
@@ -153,6 +171,10 @@ i__leave:
 	  if (__mingw_dll_atexit_table_func_ptr != NULL)
 	    __mingw_dll_atexit_table_func_ptr (1 /*execute*/);
 	  __mingw_dll_do_global_dtors ();
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+	  if (__mingw_tss_callback_ptr != NULL)
+	    __mingw_tss_callback_ptr (hDllHandle, dwReason, lpreserved);
+#endif
 
 	  __native_startup_state = __uninitialized;
 	}
@@ -167,6 +189,7 @@ i__leave:
     }
   else if (dwReason == DLL_THREAD_DETACH)
     {
+      BOOL failed = FALSE;
       if (__mingw_tss_run_dtors_ptr != NULL)
 	__mingw_tss_run_dtors_ptr ();
       if (__w64_mingwthr_callback_ptr != NULL)
@@ -174,8 +197,17 @@ i__leave:
       if (__mingw_cxa_tls_callback_ptr != NULL)
 	{
 	  if (! __mingw_cxa_tls_callback_ptr (hDllHandle, dwReason, lpreserved))
-	    return FALSE;
+	    failed = TRUE;
 	}
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+      if (__mingw_tss_callback_ptr != NULL)
+	{
+	  if (! __mingw_tss_callback_ptr (hDllHandle, dwReason, lpreserved))
+	    failed = TRUE;
+	}
+#endif
+      if (failed)
+	return FALSE;
     }
   return TRUE;
 }
@@ -228,5 +260,8 @@ i__leave:
 static const uintptr_t disabled_symbols = 0;
 extern const uintptr_t __mingw_register_thread_local_exe_atexit_callback_ptr __attribute__((alias("disabled_symbols")));
 extern const uintptr_t __mingw_register_thread_local_exe_atexit_callback_provider __attribute__((alias("disabled_symbols")));
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+extern const uintptr_t __mingw_tss_get_vals_pe_tls_ptr __attribute__((alias("disabled_symbols")));
+#endif
 
 const char __mingw_module_is_dll = 1;
