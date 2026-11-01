@@ -35,6 +35,12 @@ const int __w64_mingwthr_callback_caller_provider = 1; /* crtdll.c calls __w64_m
 WINBOOL (WINAPI *const __mingw_cxa_tls_callback_ptr)(HANDLE,DWORD,LPVOID) __attribute__((common)); /* tentative */
 const int __mingw_cxa_tls_callback_caller_provider = 1; /* crtdll.c calls __mingw_cxa_tls_callback_ptr */
 
+void (__cdecl *const __mingw_tss_run_dtors_ptr)(void) __attribute__((common)); /* tentative */
+const int __mingw_tss_run_dtors_caller_provider = 1; /* crtdll.c calls __mingw_tss_run_dtors_ptr */
+#if defined(__i386__)
+const int __mingw_tss_dtors_supported = 1; /* crtdll.c always calls __mingw_tss_run_dtors_ptr */
+#endif
+
 int (__cdecl *const __mingw_dll_atexit_table_func_ptr)(int) __attribute__((common)); /* tentative */
 
 static int __proc_attached = 0;
@@ -161,6 +167,8 @@ i__leave:
     }
   else if (dwReason == DLL_THREAD_DETACH)
     {
+      if (__mingw_tss_run_dtors_ptr != NULL)
+	__mingw_tss_run_dtors_ptr ();
       if (__w64_mingwthr_callback_ptr != NULL)
 	 __w64_mingwthr_callback_ptr (hDllHandle, dwReason, lpreserved);
       if (__mingw_cxa_tls_callback_ptr != NULL)

@@ -126,6 +126,7 @@ src_libmingw32=include/internal.h include/sect_attribs.h crt/seh_signal_dispatch
   crt/mingw_custom.c  crt/mingw_helpers.c  \
   crt/pseudo-reloc.c  crt/udll_argv.c      \
   crt/xtxtmode.c      \
+  crt/crtexe_tss_dtors_register.c \
   crt/crtdll_atexit_register.c \
   crt/tls_exe_atexit_callback.c \
   crt/tlsdyn.c        crt/tlsdtor.c        \
@@ -180,6 +181,7 @@ src_c11_threads=\
   threads/__mingw_cnd_timedwait_unguarded.c \
   threads/__mingw_mtx_timedlock_unguarded.c \
   threads/__mingw_mtx_unlock_unguarded.c \
+  threads/__mingw_tss_get_vals_pe_tls_ptr.c \
   threads/_cnd_timedwait32.c \
   threads/_cnd_timedwait64.c \
   threads/_mtx_timedlock32.c \
@@ -203,7 +205,8 @@ src_c11_threads=\
   threads/thrd_equal.c \
   threads/thrd_exit.c \
   threads/thrd_join.c \
-  threads/thrd_yield.c
+  threads/thrd_yield.c \
+  threads/tss.c
 
 # Files included in all libmsvcr*.a
 src_msvcrt_common=\
