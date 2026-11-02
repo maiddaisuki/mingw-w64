@@ -9,7 +9,6 @@
 
 #include <_mingw.h>
 #include <time.h> /* required per C11 7.26.1 1 */
-#include <stdint.h> /* needed for uintptr_t and uint32_t */
 
 #if (!defined(__STDC_VERSION__) || __STDC_VERSION__ <= 201710L || !__MINGW_GNUC_PREREQ(13, 0)) && !defined(__cplusplus)
 #define thread_local _Thread_local
@@ -26,11 +25,11 @@ enum {
 };
 
 typedef struct {
-  uintptr_t _Type;
+  __UINTPTR_TYPE__ _Type;
   void *_Ptr;
   void *_Cv;
-  uint32_t _Owner;
-  uint32_t _Cnt;
+  unsigned _Owner;
+  unsigned _Cnt;
 } mtx_t;
 
 void __cdecl mtx_destroy(mtx_t *_Mtx);
@@ -59,7 +58,7 @@ int __cdecl cnd_wait(cnd_t *_Cond, mtx_t *_Mtx);
 
 typedef struct {
   void *_Handle;
-  uint32_t _Tid;
+  unsigned _Tid;
 } thrd_t;
 
 enum {
@@ -87,7 +86,7 @@ void __cdecl thrd_yield(void);
 #define TSS_DTOR_ITERATIONS 1
 
 typedef struct {
-  uint32_t _Idx;
+  unsigned _Idx;
 } tss_t;
 
 typedef void (__cdecl*tss_dtor_t)(void*);
