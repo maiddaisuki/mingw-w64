@@ -10,6 +10,9 @@
 
 #include <windows.h> /* for LocalAlloc(), LocalFree(), TlsAlloc(), TlsFree(), TlsGetValue() and TlsSetValue() */
 
+extern int __mingw_tss_register_interface(void);
+extern void __mingw_tss_unregister_interface(void);
+
 static DWORD tss_tls_key = TLS_OUT_OF_INDEXES;
 
 /* Return pointer to WinAPI allocated TLS array where are stored values for all tss_t keys and their generations. */
@@ -25,6 +28,11 @@ static WINBOOL WINAPI tss_callback(HANDLE handle __attribute__((unused)), DWORD 
     tss_tls_key = TlsAlloc();
     if (tss_tls_key == TLS_OUT_OF_INDEXES)
       return FALSE;
+    if (!__mingw_tss_register_interface()) {
+      TlsFree(tss_tls_key);
+      tss_tls_key = TLS_OUT_OF_INDEXES;
+      return FALSE;
+    }
   }
 
   if (reason == DLL_PROCESS_ATTACH || reason == DLL_THREAD_ATTACH) {
@@ -47,6 +55,7 @@ static WINBOOL WINAPI tss_callback(HANDLE handle __attribute__((unused)), DWORD 
   }
 
   if (reason == DLL_PROCESS_DETACH) {
+    __mingw_tss_unregister_interface();
     if (tss_tls_key != TLS_OUT_OF_INDEXES) {
       TlsFree(tss_tls_key);
       tss_tls_key = TLS_OUT_OF_INDEXES;
