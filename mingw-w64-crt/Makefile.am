@@ -695,13 +695,16 @@ src_msvcrt64=\
   misc/__tzname.c \
   misc/_get_doserrno.c \
   misc/_get_fmode.c \
+  misc/_getdllprocaddr.c \
   misc/_initterm_e.c \
+  misc/_loaddll.c \
   misc/_mkgmtime32.c \
   misc/_set_doserrno.c \
   misc/_set_fmode.c \
   misc/output_format.c \
   misc/_get_errno.c \
   misc/_set_errno.c \
+  misc/_unloaddll.c \
   misc/strnlen.c \
   misc/wassert.c \
   misc/wcsnlen.c \
@@ -752,6 +755,9 @@ src_msvcrtarm32=\
   misc/_getpid.c \
   misc/__initenv.c \
   misc/__winitenv.c \
+  misc/_getdllprocaddr.c \
+  misc/_loaddll.c \
+  misc/_unloaddll.c \
   secapi/msvcrt_arm_wcstok_s.c \
   stdio/_findfirst64i32.c \
   stdio/_findnext64i32.c \
@@ -878,6 +884,9 @@ src_msvcrtarm64=\
   misc/_getpid.c \
   misc/__initenv.c \
   misc/__winitenv.c \
+  misc/_getdllprocaddr.c \
+  misc/_loaddll.c \
+  misc/_unloaddll.c \
   secapi/msvcrt_arm_wcstok_s.c \
   stdio/_findfirst32.c \
   stdio/_findfirst32i64.c \
