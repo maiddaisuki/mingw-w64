@@ -73,6 +73,13 @@ libtls11.dll: libtls11.o
 	$(LINK) -shared -o $@ $^
 t_tls_dll.exe: libtls01.dll libtls02.dll libtls03.dll libtls04.dll libtls05.dll libtls06.dll libtls07.dll libtls08.dll libtls09.dll libtls10.dll libtls11.dll
 
+# Used by t_tss
+libtss1.dll: libtss1.o
+	$(LINK) -shared -o $@ $^
+libtss2.dll: libtss2.o
+	$(LINK) -shared -o $@ $^
+t_tss.exe: libtss1.dll libtss2.dll
+
 # The following tests are compiled but not run with `make check`.
 testcase_compile_only = \
   t_intrin \
@@ -190,6 +197,7 @@ testcase_progs = \
   t_tls_c11 \
   t_tmpfile \
   t_towctrans \
+  t_tss \
   t_trycatch \
   t_tsearch \
   t_utime \
@@ -287,6 +295,9 @@ t_tls_dll_native_LDADD = libtlsnat.dll $(LDADD)
 # Link t_tls_dll_native_process_detach against libtlsnatprocdet.dll
 t_tls_dll_native_process_detach_LDADD = libtlsnatprocdet.dll $(LDADD)
 
+# Link t_tss against libtss1.dll
+t_tss_LDADD = libtss1.dll $(LDADD)
+
 # t_winmain is a GUI App; use -mwindows to properly link it and set subsystem
 t_winmain_LDFLAGS = $(AM_LDFLAGS) -mwindows
 
@@ -353,4 +364,6 @@ CLEANFILES = \
   libtls10.dll \
   libtls11.dll \
   libtlsnat.dll \
-  libtlsnatprocdet.dll
+  libtlsnatprocdet.dll \
+  libtss1.dll \
+  libtss2.dll
