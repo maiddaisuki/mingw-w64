@@ -276,10 +276,29 @@
 #endif
 
 /**
+ * Set when `WaitOnAddress` and `WakeByAddress*` functions are available.
+ */
+#define WINPTHREADS_FEATURE_WAIT_ON_ADDRESS 0x01
+
+/**
+ * In order to use `WaitOnAddress` and `WakeByAddress*` functions, we must link
+ * against Synchronization.lib (-synchronization). As the result, we cannot
+ * reference them in static winpthreads as it would require all its users to
+ * also link against Synchronization.lib.
+ */
+#if WINPTHREADS_WINNT >= WINPTHREADS_WINNT_WIN8 && defined(DLL_EXPORT)
+#define WINPTHREADS_DEFAULT_FEATURE_WAIT_ON_ADDRESS WINPTHREADS_FEATURE_WAIT_ON_ADDRESS
+#else
+#define WINPTHREADS_DEFAULT_FEATURE_WAIT_ON_ADDRESS 0
+#endif
+
+/**
  * Mask of `WINPTHREADS_FEATURE_*` bits which are guaranteed to be
  * available at runtime.
  */
-#define WINPTHREADS_DEFAULT_FEATURES (0)
+#define WINPTHREADS_DEFAULT_FEATURES (        \
+  WINPTHREADS_DEFAULT_FEATURE_WAIT_ON_ADDRESS \
+)
 
 /**
  * Return mask of `WINPTHREADS_FEATURE_*` bits available at runtime.
@@ -310,6 +329,16 @@ int winpthreads_features (void);
  * Check if feature `bit` is available at runtime.
  */
 #define WINPTHREADS_CHECK_FEATURE(bit) WINPTHREADS_TEST_FEATURE (winpthreads_features (), bit)
+
+/**
+ * Portability wrapper for `WaitOnAddress`.
+ */
+int winpthreads_wait_on_address (void *address, void *compareAddress, size_t addressSize, unsigned timeout);
+
+/**
+ * Portability wrapper for `WakeByAddress*` functions.
+ */
+void winpthreads_wake_by_address (void *address, int wakeAll);
 
 /**
  * Portability wrapper for `GetHandleInformation`.
