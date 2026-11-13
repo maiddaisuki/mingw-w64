@@ -125,6 +125,21 @@ static struct {
 #endif /* RUNTIME_CHECKS */
 
 /**
+ * Function type corresponding to `winpthreads_tls`.
+ */
+typedef unsigned (* FuncWinpthreadsTls) (void);
+
+/**
+ * Initialization routine for `winpthreads_tls`
+ */
+static unsigned WinpthreadsTlsInit (void);
+
+/**
+ * Implementation for `winpthreads_tls`.
+ */
+static unsigned WinpthreadsTls (void);
+
+/**
  * Function type corresponding to `winpthreads_set_thread_description_ansi`.
  */
 typedef int (* FuncWinpthreadsSetThreadDescriptionAnsi) (void *, const char *);
@@ -188,6 +203,18 @@ static struct {
    * available at runtime.
    */
   int Features;
+  /**
+   * TLS index used by the library.
+   */
+  unsigned TlsIndex;
+  /**
+   * Implementation for `winpthreads_tls`.
+   *
+   * By default, it points to `WinpthreadsTlsInit`, which is used to allocate
+   * `TlsIndex`. After `TlsIndex` is allocated, it points to `WinpthreadsTls`,
+   * which simply returns `TlsIndex`.
+   */
+  FuncWinpthreadsTls PtrWinpthreadsTls;
 #if WINPTHREADS_WINNT <= WINPTHREADS_WINNT_WIN10
   /**
    * Implementation for `winpthreads_set_thread_description_ansi`.
@@ -196,6 +223,8 @@ static struct {
 #endif
 } WinpthreadsImpl = {
   .Features = WINPTHREADS_DEFAULT_FEATURES,
+  .TlsIndex = TLS_OUT_OF_INDEXES,
+  .PtrWinpthreadsTls = WinpthreadsTlsInit,
 };
 
 /**
@@ -218,6 +247,11 @@ static struct {
  * must be deallocated after `DllMain` is called with `DLL_PROCESS_DETACH`.
  */
 static int __cdecl winpthreads_fini (void) {
+  if (WinpthreadsImpl.TlsIndex != TLS_OUT_OF_INDEXES) {
+    TlsFree (WinpthreadsImpl.TlsIndex);
+    WinpthreadsImpl.TlsIndex = TLS_OUT_OF_INDEXES;
+  }
+
   return 0;
 }
 
@@ -230,6 +264,13 @@ __attribute__ ((constructor (0)))
 #endif
 static void winpthreads_init (void)
 {
+  /**
+   * Allocate TLS index if not allocated yet.
+   */
+  if (WinpthreadsImpl.TlsIndex == TLS_OUT_OF_INDEXES) {
+    WinpthreadsImpl.PtrWinpthreadsTls ();
+  }
+
 #ifdef RUNTIME_CHECKS
   HMODULE kernel32   = WINPTHREADS_AW (GetModuleHandle) (WINPTHREADS_TEXT ("kernel32.dll"));
   HMODULE kernelbase = WINPTHREADS_AW (GetModuleHandle) (WINPTHREADS_TEXT ("kernelbase.dll"));
@@ -344,6 +385,38 @@ extern const _PVFV __xc_t;
 const _PVFV __xc_t = winpthreads_init;
 #endif
 
+static unsigned WinpthreadsTlsInit (void) {
+  DWORD tlsIndex = TlsAlloc ();
+
+  if (tlsIndex != TLS_OUT_OF_INDEXES) {
+    /**
+     * It is possible that some other thread allocated TLS index before us.
+     */
+    DWORD oldTlsIndex = (DWORD) InterlockedCompareExchange (
+      (LONG *) &WinpthreadsImpl.TlsIndex, (LONG) tlsIndex, (LONG) TLS_OUT_OF_INDEXES
+    );
+
+    if (likely (oldTlsIndex == TLS_OUT_OF_INDEXES)) {
+      InterlockedExchangePointer ((void **) &WinpthreadsImpl.PtrWinpthreadsTls, WinpthreadsTls);
+    } else {
+      TlsFree (tlsIndex);
+    }
+  }
+
+  /**
+   * We cannot continue without TLS index.
+   */
+  if (WinpthreadsImpl.TlsIndex == TLS_OUT_OF_INDEXES) {
+    abort ();
+  }
+
+  return WinpthreadsImpl.TlsIndex;
+}
+
+static unsigned WinpthreadsTls (void) {
+  return WinpthreadsImpl.TlsIndex;
+}
+
 #if WINPTHREADS_WINNT > WINPTHREADS_WINNT_WIN10
 #define SetThreadDescriptionAnsi WinpthreadsSetThreadDescriptionAnsi
 #else
@@ -376,6 +449,10 @@ int winpthreads_set_thread_description_ansi (void *handle, const char *descripti
 
 int winpthreads_set_thread_description_unicode (void *handle, const wchar_t *description) {
   return SetThreadDescription (handle, description);
+}
+
+unsigned winpthreads_tls (void) {
+  return WinpthreadsImpl.PtrWinpthreadsTls ();
 }
 
 int winpthreads_validate_handle (void *handle) {
