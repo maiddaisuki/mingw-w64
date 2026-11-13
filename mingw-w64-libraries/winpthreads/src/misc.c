@@ -198,6 +198,29 @@ static struct {
   .Features = WINPTHREADS_DEFAULT_FEATURES,
 };
 
+/**
+ * The finalization routine.
+ *
+ * This function is registered with `_onexit` in `winpthreads_init`.
+ *
+ * When winpthreads is statically linked into an executable,
+ * `_onexit` behaves in the same way as standard `atexit`.
+ *
+ * When winpthreads is a DLL or is linked statically into another DLL,
+ * the callback registered with `_onexit` is called when the DLL in question
+ * is unloading, after `DllMain` is called with `DLL_PROCESS_DETACH`.
+ *
+ * This provides us a mechanism to free any resources which may be allocated
+ * in `winpthreads_init` and other `*_init` functions.
+ *
+ * Note that `winpthreads_init` is called before `DllMain` is called with
+ * `DLL_PROCESS_ATTACH`; any resources allocated from `winpthreads_init`
+ * must be deallocated after `DllMain` is called with `DLL_PROCESS_DETACH`.
+ */
+static int __cdecl winpthreads_fini (void) {
+  return 0;
+}
+
 #if defined(__GNUC__) || defined(__clang__)
 #if __GNUC__ >= 9 && !defined(__clang__)
 #pragma GCC diagnostic push
@@ -295,6 +318,10 @@ static void winpthreads_init (void)
 
   winpthreads_affinity_init ();
   winpthreads_time_init ();
+
+  if (_onexit (winpthreads_fini) == NULL) {
+    abort ();
+  }
 }
 #if defined(__GNUC__) && __GNUC__ >= 9 && !defined(__clang__)
 #pragma GCC diagnostic pop
