@@ -276,6 +276,42 @@
 #endif
 
 /**
+ * Mask of `WINPTHREADS_FEATURE_*` bits which are guaranteed to be
+ * available at runtime.
+ */
+#define WINPTHREADS_DEFAULT_FEATURES (0)
+
+/**
+ * Return mask of `WINPTHREADS_FEATURE_*` bits available at runtime.
+ *
+ * The returned feature mask always includes feature bits set in
+ * `WINPTHREADS_DEFAULT_FEATURES`.
+ *
+ * NOTE: do not call this function directly and instead use macros
+ *    `WINPTHREADS_HAVE_FEATURE` and `WINPTHREADS_CHECK_FEATURE` defined below.
+ */
+int winpthreads_features (void);
+
+/**
+ * Check if `bit` is set in `mask`; the `bit` is expcted to be one of
+ * `WINPTHREADS_FEATURE_*` bits.
+ */
+#define WINPTHREADS_TEST_FEATURE(mask, bit) ((mask) & (bit))
+
+/**
+ * Check if feature `bit` is set in `WINPTHREADS_DEFAULT_FEATURES`.
+ *
+ * This macro can be used in preprocessor conditions, which allows to omit
+ * unnecessary checks at runtime.
+ */
+#define WINPTHREADS_HAVE_FEATURE(bit) WINPTHREADS_TEST_FEATURE (WINPTHREADS_DEFAULT_FEATURES, bit)
+
+/**
+ * Check if feature `bit` is available at runtime.
+ */
+#define WINPTHREADS_CHECK_FEATURE(bit) WINPTHREADS_TEST_FEATURE (winpthreads_features (), bit)
+
+/**
  * Portability wrapper for `GetHandleInformation`.
  */
 int winpthreads_get_handle_information (void *, unsigned *);
