@@ -692,16 +692,16 @@ jobs:
           export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) -C testcases clean
-          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-lmsvcrt20" CXXFLAGS="-lmsvcrt20" LDFLAGS='-static -lmsvcrt20' TESTS=
-          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-lmsvcrt20" CXXFLAGS="-lmsvcrt20" LDFLAGS='-static -lmsvcrt20' || { cat testcases/test-suite.log; exit 1; }
+          make -j$(nproc) check -k -O --no-print-directory LDFLAGS='-static -lmsvcrt20' TESTS=
+          make -j$(nproc) check -k -O --no-print-directory LDFLAGS='-static -lmsvcrt20' || { cat testcases/test-suite.log; exit 1; }
       - name: Run mingw-w64-crt testcases for msvcrt40.dll
         if: matrix.arch == 'i686' && matrix.crt == 'msvcrt'
         run: |
           export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) -C testcases clean
-          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-lmsvcrt40" CXXFLAGS="-lmsvcrt40" LDFLAGS='-static -lmsvcrt40' TESTS=
-          make -j$(nproc) check -k -O --no-print-directory CFLAGS="-lmsvcrt40" CXXFLAGS="-lmsvcrt40" LDFLAGS='-static -lmsvcrt40' || { cat testcases/test-suite.log; exit 1; }
+          make -j$(nproc) check -k -O --no-print-directory LDFLAGS='-static -lmsvcrt40' TESTS=
+          make -j$(nproc) check -k -O --no-print-directory LDFLAGS='-static -lmsvcrt40' || { cat testcases/test-suite.log; exit 1; }
       - name: Run mingw-w64-crt testcases for ucrtapp
         if: matrix.arch != 'armv7' && matrix.crt == 'ucrt'
         continue-on-error: true
