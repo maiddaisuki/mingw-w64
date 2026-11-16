@@ -144,6 +144,7 @@ testcase_progs = \
   t_mbrlen \
   t_mbrtowc \
   t_mbsrtowcs \
+  t_mtx \
   t_noatexit_dll \
   t_nontls_dll \
   t_nontls_exe \
