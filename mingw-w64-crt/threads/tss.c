@@ -313,12 +313,18 @@ static void __cdecl tss_run_dtors(void)
     if (gen != copy_tss_dtors_gen[i])
       continue;
 
+    /* Before destructor is invoked, the value in tss storage has to be set to NULL. */
+    void *val = vals[i];
+    if (val == NULL)
+      continue;
+    vals[i] = NULL;
+
     /* Check if the value is valid. */
     if (vals_gen[i] != gen)
       continue;
 
-    if (dtor != NULL && dtor != tss_dtor_null && vals[i] != NULL)
-      dtor(vals[i]);
+    if (dtor != NULL && dtor != tss_dtor_null)
+      dtor(val);
   }
 }
 void (__cdecl *const __mingw_tss_run_dtors_ptr)(void) = tss_run_dtors;
