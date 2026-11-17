@@ -1,4 +1,5 @@
 #include <threads.h>
+#include <stdlib.h>
 #include <process.h>
 #include <assert.h>
 
@@ -21,7 +22,7 @@ static void *(__cdecl *vcrthrds_tss_get)(tss_t key);
 static int (__cdecl *vcrthrds_tss_set)(tss_t key, void *val);
 
 static int dtor_called = 0;
-static void __cdecl dtor(void *val) {
+static void __cdecl dtor_func(void *val) {
   (void)val;
   dtor_called = 1;
 }
@@ -31,6 +32,9 @@ int main() {
 
   intptr_t lib2, vcrthrds;
   tss_t key0, key1, key2, key3;
+
+  /* dtor function is not supported on Win9x */
+  tss_dtor_t dtor = _osplatform != 1 ? dtor_func : NULL;
 
   assert(tss_create(&key0, NULL) == thrd_success);
   assert(tss_get(key0) == NULL);
