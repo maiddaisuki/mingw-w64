@@ -22,6 +22,11 @@ static void *(__cdecl *vcrthrds_tss_get)(tss_t key);
 static int (__cdecl *vcrthrds_tss_set)(tss_t key, void *val);
 
 static int dtor_called = 0;
+
+#if defined(__i386__)
+/* We need to make sure that we align the stack to 16 bytes for the sake of SSE */
+__attribute__((force_align_arg_pointer))
+#endif
 static void __cdecl dtor_func(void *val) {
   (void)val;
   dtor_called = 1;
