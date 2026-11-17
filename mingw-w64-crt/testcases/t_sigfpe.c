@@ -1192,6 +1192,10 @@ static void __cdecl test_from_beginthread(void *arg)
 }
 #endif
 
+#if defined(__i386__)
+/* We need to make sure that we align the stack to 16 bytes for the sake of SSE */
+__attribute__((force_align_arg_pointer))
+#endif
 static int __cdecl test_from_thrd_create(void *arg)
 {
   (void)arg;
