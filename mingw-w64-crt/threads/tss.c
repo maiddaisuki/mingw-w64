@@ -59,7 +59,7 @@ int __cdecl __mingw_tss_register_interface(void)
   /* Compose atom name in string format "mingw_tss_0xADDR" */
   __builtin_memcpy(atom_name, "mingw_tss_0x", 12);
   for (i = 0; i < len; i++) {
-    digit = ((uintptr_t)&tss_interface & (0xf << 4*(len-i-1))) >> (4*(len-i-1));
+    digit = ((uintptr_t)&tss_interface >> (4*(len-i-1))) & 0xf;
     atom_name[12 + i] = digit > 9 ? (digit-0xA+'A') : (digit+'0');
   }
   atom_name[12 + len] = '\0';
