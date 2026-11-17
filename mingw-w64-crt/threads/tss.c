@@ -180,7 +180,7 @@ void __cdecl tss_delete(tss_t key)
       FARPROC proc = dll ? GetProcAddress(dll, "tss_delete") : NULL;
       if (!proc)
         return;
-      __atomic_store_n(&vcruntime_tss_delete, proc, __ATOMIC_SEQ_CST);
+      __atomic_store_n(&vcruntime_tss_delete, (void(__cdecl*)(tss_t))(void(*)(void))proc, __ATOMIC_SEQ_CST);
     }
     vcruntime_tss_delete(key);
     return;
@@ -219,7 +219,7 @@ void *__cdecl tss_get(tss_t key)
       FARPROC proc = dll ? GetProcAddress(dll, "tss_get") : NULL;
       if (!proc)
         return NULL;
-      __atomic_store_n(&vcruntime_tss_get, proc, __ATOMIC_SEQ_CST);
+      __atomic_store_n(&vcruntime_tss_get, (void*(__cdecl*)(tss_t))(void(*)(void))proc, __ATOMIC_SEQ_CST);
     }
     return vcruntime_tss_get(key);
   }
@@ -265,7 +265,7 @@ int __cdecl tss_set(tss_t key, void *val)
       FARPROC proc = dll ? GetProcAddress(dll, "tss_set") : NULL;
       if (!proc)
         return thrd_error;
-      __atomic_store_n(&vcruntime_tss_set, proc, __ATOMIC_SEQ_CST);
+      __atomic_store_n(&vcruntime_tss_set, (int(__cdecl*)(tss_t,void*))(void(*)(void))proc, __ATOMIC_SEQ_CST);
     }
     return vcruntime_tss_set(key, val);
   }
