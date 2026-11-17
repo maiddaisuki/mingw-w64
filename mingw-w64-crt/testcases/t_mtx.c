@@ -44,11 +44,9 @@ int main() {
   mingw_test_init();
 
   mtx_t mtx;
-#ifdef _UCRT
   struct timespec ts;
   struct _timespec32 ts32;
   struct _timespec64 ts64;
-#endif
 
   /* mtx_plain */
   assert(mtx_init(&mtx, mtx_plain) == thrd_success);
@@ -75,7 +73,6 @@ int main() {
   assert(mtx_unlock(&mtx) == thrd_success);
   mtx_destroy(&mtx);
 
-#ifdef _UCRT
   /* mtx_timed */
   assert(mtx_init(&mtx, mtx_timed) == thrd_success);
   assert(mtx_lock(&mtx) == thrd_success);
@@ -160,7 +157,6 @@ int main() {
   assert(mtx_unlock(&mtx) == thrd_success);
   assert(mtx_unlock(&mtx) == thrd_success);
   mtx_destroy(&mtx);
-#endif
 
 
   int counter;
