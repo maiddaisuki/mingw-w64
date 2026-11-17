@@ -187,6 +187,19 @@ i__leave:
 	  return FALSE;
 	}
     }
+  else if (dwReason == DLL_THREAD_ATTACH)
+    {
+      BOOL failed = FALSE;
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+      if (__mingw_tss_callback_ptr != NULL)
+	{
+	  if (! __mingw_tss_callback_ptr (hDllHandle, dwReason, lpreserved))
+	    failed = TRUE;
+	}
+#endif
+      if (failed)
+	return FALSE;
+    }
   else if (dwReason == DLL_THREAD_DETACH)
     {
       BOOL failed = FALSE;
