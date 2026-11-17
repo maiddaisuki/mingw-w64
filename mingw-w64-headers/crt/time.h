@@ -25,9 +25,7 @@ _CRT_BEGIN_C_HEADER
 
 #define CLOCKS_PER_SEC 1000
 
-#ifdef _UCRT
 #define TIME_UTC 1
-#endif
 
   _CRTIMP int *__cdecl __daylight(void);
   _CRTIMP long *__cdecl __dstbias(void);
@@ -71,9 +69,7 @@ _CRT_BEGIN_C_HEADER
   _SECIMP errno_t __cdecl _strtime_s (char *_Buf ,size_t _SizeInBytes);
   __DEFINE_CPP_OVERLOAD_SECURE_FUNC_0_0(errno_t, _strtime_s, char, _Str)
   _CRTIMP __time32_t __cdecl _time32(__time32_t *_Time);
-#ifdef _UCRT
   _CRTIMP int __cdecl _timespec32_get(struct _timespec32 *_Ts, int _Base);
-#endif
   _CRTIMP __time32_t __cdecl _mktime32(struct tm *_Tm);
   _CRTIMP __time32_t __cdecl _mkgmtime32(struct tm *_Tm);
 
@@ -97,9 +93,7 @@ _CRT_BEGIN_C_HEADER
   _CRTIMP __time64_t __cdecl _mktime64(struct tm *_Tm);
   _CRTIMP __time64_t __cdecl _mkgmtime64(struct tm *_Tm);
   _CRTIMP __time64_t __cdecl _time64(__time64_t *_Time);
-#ifdef _UCRT
   _CRTIMP int __cdecl _timespec64_get(struct _timespec64 *_Ts, int _Base);
-#endif
   unsigned __cdecl _getsystime(struct tm *_Tm);
   unsigned __cdecl _setsystime(struct tm *_Tm,unsigned _MilliSec);
 
@@ -112,9 +106,7 @@ _CRT_BEGIN_C_HEADER
 #ifndef _CRTBLD
 #ifdef _USE_32BIT_TIME_T
 time_t __CRTDECL time(time_t *_Time) __MINGW_ASM_CALL(_time32);
-#ifdef _UCRT
 int __CRTDECL timespec_get(struct timespec* _Ts, int _Base) __MINGW_ASM_CALL(_timespec32_get);
-#endif
 double __CRTDECL difftime(time_t _Time1,time_t _Time2) __MINGW_ASM_CALL(_difftime32);
 struct tm *__CRTDECL localtime(const time_t *_Time) __MINGW_ASM_CALL(_localtime32);
 errno_t __CRTDECL localtime_s(struct tm *_Tm,const time_t *_Time) __MINGW_ASM_CALL(_localtime32_s);
@@ -126,9 +118,7 @@ time_t __CRTDECL mktime(struct tm *_Tm) __MINGW_ASM_CALL(_mktime32);
 time_t __CRTDECL _mkgmtime(struct tm *_Tm) __MINGW_ASM_CALL(_mkgmtime32);
 #else
 time_t __CRTDECL time(time_t *_Time) __MINGW_ASM_CALL(_time64);
-#ifdef _UCRT
 int __CRTDECL timespec_get(struct timespec* _Ts, int _Base) __MINGW_ASM_CALL(_timespec64_get);
-#endif
 double __CRTDECL difftime(time_t _Time1,time_t _Time2) __MINGW_ASM_CALL(_difftime64);
 struct tm *__CRTDECL localtime(const time_t *_Time) __MINGW_ASM_CALL(_localtime64);
 errno_t __CRTDECL localtime_s(struct tm *_Tm,const time_t *_Time) __MINGW_ASM_CALL(_localtime64_s);

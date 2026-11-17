@@ -219,6 +219,8 @@ src_msvcrt_common=\
   misc/__mingw_mbrtowc_cp.c \
   misc/__mingw_wcrtomb_cp.c \
   misc/_onexit.c \
+  misc/_timespec32_get.c \
+  misc/_timespec64_get.c \
   misc/exit.c \
   misc/mbrlen.c \
   misc/mbrtowc.c \
