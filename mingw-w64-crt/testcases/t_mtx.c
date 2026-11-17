@@ -6,6 +6,10 @@
 
 #define COUNTER_ITERS 1024
 
+#if defined(__i386__)
+/* We need to make sure that we align the stack to 16 bytes for the sake of SSE */
+__attribute__((force_align_arg_pointer))
+#endif
 static int __cdecl thrd_counter_trylock_worker(void *arg) {
   void *(*thrd_data)[2] = arg;
   mtx_t *mtx_ptr = (*thrd_data)[0];
@@ -24,6 +28,10 @@ static int __cdecl thrd_counter_trylock_worker(void *arg) {
   return 0;
 }
 
+#if defined(__i386__)
+/* We need to make sure that we align the stack to 16 bytes for the sake of SSE */
+__attribute__((force_align_arg_pointer))
+#endif
 static int __cdecl thrd_counter_lock_worker(void *arg) {
   void *(*thrd_data)[2] = arg;
   mtx_t *mtx_ptr = (*thrd_data)[0];
