@@ -178,91 +178,96 @@ int main() {
   assert(lib1_tss_get(key0) == (void*)10);
   assert(tss_get(key0) == (void*)10);
 
-  vcrthrds = _loaddll("vcruntime140_threads.dll");
-  if (vcrthrds) {
-    vcrthrds_tss_create = (__typeof(vcrthrds_tss_create))(void(*)(void))_getdllprocaddr(vcrthrds, "tss_create", -1);
-    assert(vcrthrds_tss_create);
-    vcrthrds_tss_delete = (__typeof(vcrthrds_tss_delete))(void(*)(void))_getdllprocaddr(vcrthrds, "tss_delete", -1);
-    assert(vcrthrds_tss_delete);
-    vcrthrds_tss_get = (__typeof(vcrthrds_tss_get))(void(*)(void))_getdllprocaddr(vcrthrds, "tss_get", -1);
-    assert(vcrthrds_tss_get);
-    vcrthrds_tss_set = (__typeof(vcrthrds_tss_set))(void(*)(void))_getdllprocaddr(vcrthrds, "tss_set", -1);
-    assert(vcrthrds_tss_set);
+  /* vcruntime140_threads.dll is not available for arm32 */
+#ifndef __arm__
+  for (int i = 0; i < 2; i++) {
+    vcrthrds = _loaddll("vcruntime140_threads.dll");
+    if (vcrthrds) {
+      vcrthrds_tss_create = (__typeof(vcrthrds_tss_create))(void(*)(void))_getdllprocaddr(vcrthrds, "tss_create", -1);
+      assert(vcrthrds_tss_create);
+      vcrthrds_tss_delete = (__typeof(vcrthrds_tss_delete))(void(*)(void))_getdllprocaddr(vcrthrds, "tss_delete", -1);
+      assert(vcrthrds_tss_delete);
+      vcrthrds_tss_get = (__typeof(vcrthrds_tss_get))(void(*)(void))_getdllprocaddr(vcrthrds, "tss_get", -1);
+      assert(vcrthrds_tss_get);
+      vcrthrds_tss_set = (__typeof(vcrthrds_tss_set))(void(*)(void))_getdllprocaddr(vcrthrds, "tss_set", -1);
+      assert(vcrthrds_tss_set);
 
-    assert(vcrthrds_tss_create(&key3, dtor) == thrd_success);
-    assert(vcrthrds_tss_get(key3) == NULL);
-    assert(tss_get(key3) == NULL);
-    assert(lib1_tss_get(key3) == NULL);
-    assert(lib2_tss_get(key3) == NULL);
+      assert(vcrthrds_tss_create(&key3, dtor) == thrd_success);
+      assert(vcrthrds_tss_get(key3) == NULL);
+      assert(tss_get(key3) == NULL);
+      assert(lib1_tss_get(key3) == NULL);
+      assert(lib2_tss_get(key3) == NULL);
 
-    assert(vcrthrds_tss_set(key3, (void*)100) == thrd_success);
-    assert(tss_get(key3) == (void*)100);
-    assert(lib1_tss_get(key3) == (void*)100);
-    assert(lib2_tss_get(key3) == (void*)100);
-    assert(vcrthrds_tss_get(key3) == (void*)100);
+      assert(vcrthrds_tss_set(key3, (void*)100) == thrd_success);
+      assert(tss_get(key3) == (void*)100);
+      assert(lib1_tss_get(key3) == (void*)100);
+      assert(lib2_tss_get(key3) == (void*)100);
+      assert(vcrthrds_tss_get(key3) == (void*)100);
 
-    assert(tss_set(key3, (void*)101) == thrd_success);
-    assert(tss_get(key3) == (void*)101);
-    assert(lib1_tss_get(key3) == (void*)101);
-    assert(lib2_tss_get(key3) == (void*)101);
-    assert(vcrthrds_tss_get(key3) == (void*)101);
+      assert(tss_set(key3, (void*)101) == thrd_success);
+      assert(tss_get(key3) == (void*)101);
+      assert(lib1_tss_get(key3) == (void*)101);
+      assert(lib2_tss_get(key3) == (void*)101);
+      assert(vcrthrds_tss_get(key3) == (void*)101);
 
-    assert(lib1_tss_set(key3, (void*)102) == thrd_success);
-    assert(tss_get(key3) == (void*)102);
-    assert(lib1_tss_get(key3) == (void*)102);
-    assert(lib2_tss_get(key3) == (void*)102);
-    assert(vcrthrds_tss_get(key3) == (void*)102);
+      assert(lib1_tss_set(key3, (void*)102) == thrd_success);
+      assert(tss_get(key3) == (void*)102);
+      assert(lib1_tss_get(key3) == (void*)102);
+      assert(lib2_tss_get(key3) == (void*)102);
+      assert(vcrthrds_tss_get(key3) == (void*)102);
 
-    assert(lib2_tss_set(key3, (void*)103) == thrd_success);
-    assert(tss_get(key3) == (void*)103);
-    assert(lib1_tss_get(key3) == (void*)103);
-    assert(lib2_tss_get(key3) == (void*)103);
-    assert(vcrthrds_tss_get(key3) == (void*)103);
+      assert(lib2_tss_set(key3, (void*)103) == thrd_success);
+      assert(tss_get(key3) == (void*)103);
+      assert(lib1_tss_get(key3) == (void*)103);
+      assert(lib2_tss_get(key3) == (void*)103);
+      assert(vcrthrds_tss_get(key3) == (void*)103);
 
-    assert(vcrthrds_tss_set(key3, (void*)104) == thrd_success);
-    assert(tss_get(key3) == (void*)104);
-    assert(lib1_tss_get(key3) == (void*)104);
-    assert(lib2_tss_get(key3) == (void*)104);
-    assert(vcrthrds_tss_get(key3) == (void*)104);
+      assert(vcrthrds_tss_set(key3, (void*)104) == thrd_success);
+      assert(tss_get(key3) == (void*)104);
+      assert(lib1_tss_get(key3) == (void*)104);
+      assert(lib2_tss_get(key3) == (void*)104);
+      assert(vcrthrds_tss_get(key3) == (void*)104);
 
-    vcrthrds_tss_delete(key3);
-    assert(!dtor_called);
+      vcrthrds_tss_delete(key3);
+      assert(!dtor_called);
 
-    /* vcrthrds_tss_create -> tss_delete */
-    assert(vcrthrds_tss_create(&key3, dtor) == thrd_success);
-    assert(vcrthrds_tss_get(key3) == NULL);
-    assert(tss_get(key3) == NULL);
-    assert(lib1_tss_get(key3) == NULL);
-    assert(lib2_tss_get(key3) == NULL);
-    assert(vcrthrds_tss_set(key3, (void*)105) == thrd_success);
-    assert(tss_get(key3) == (void*)105);
-    tss_delete(key3);
-    assert(!dtor_called);
+      /* vcrthrds_tss_create -> tss_delete */
+      assert(vcrthrds_tss_create(&key3, dtor) == thrd_success);
+      assert(vcrthrds_tss_get(key3) == NULL);
+      assert(tss_get(key3) == NULL);
+      assert(lib1_tss_get(key3) == NULL);
+      assert(lib2_tss_get(key3) == NULL);
+      assert(vcrthrds_tss_set(key3, (void*)105) == thrd_success);
+      assert(tss_get(key3) == (void*)105);
+      tss_delete(key3);
+      assert(!dtor_called);
 
-    /* vcrthrds_tss_create -> lib1_tss_delete */
-    assert(vcrthrds_tss_create(&key3, dtor) == thrd_success);
-    assert(vcrthrds_tss_get(key3) == NULL);
-    assert(tss_get(key3) == NULL);
-    assert(lib1_tss_get(key3) == NULL);
-    assert(lib2_tss_get(key3) == NULL);
-    assert(vcrthrds_tss_set(key3, (void*)106) == thrd_success);
-    assert(tss_get(key3) == (void*)106);
-    lib1_tss_delete(key3);
-    assert(!dtor_called);
+      /* vcrthrds_tss_create -> lib1_tss_delete */
+      assert(vcrthrds_tss_create(&key3, dtor) == thrd_success);
+      assert(vcrthrds_tss_get(key3) == NULL);
+      assert(tss_get(key3) == NULL);
+      assert(lib1_tss_get(key3) == NULL);
+      assert(lib2_tss_get(key3) == NULL);
+      assert(vcrthrds_tss_set(key3, (void*)106) == thrd_success);
+      assert(tss_get(key3) == (void*)106);
+      lib1_tss_delete(key3);
+      assert(!dtor_called);
 
-    /* vcrthrds_tss_create -> lib2_tss_delete */
-    assert(vcrthrds_tss_create(&key3, dtor) == thrd_success);
-    assert(vcrthrds_tss_get(key3) == NULL);
-    assert(tss_get(key3) == NULL);
-    assert(lib1_tss_get(key3) == NULL);
-    assert(lib2_tss_get(key3) == NULL);
-    assert(vcrthrds_tss_set(key3, (void*)107) == thrd_success);
-    assert(tss_get(key3) == (void*)107);
-    lib2_tss_delete(key3);
-    assert(!dtor_called);
+      /* vcrthrds_tss_create -> lib2_tss_delete */
+      assert(vcrthrds_tss_create(&key3, dtor) == thrd_success);
+      assert(vcrthrds_tss_get(key3) == NULL);
+      assert(tss_get(key3) == NULL);
+      assert(lib1_tss_get(key3) == NULL);
+      assert(lib2_tss_get(key3) == NULL);
+      assert(vcrthrds_tss_set(key3, (void*)107) == thrd_success);
+      assert(tss_get(key3) == (void*)107);
+      lib2_tss_delete(key3);
+      assert(!dtor_called);
 
-    assert(_unloaddll(vcrthrds) == 0);
+      assert(_unloaddll(vcrthrds) == 0);
+    }
   }
+#endif
 
   assert(_unloaddll(lib2) == 0);
   assert(!dtor_called);
