@@ -16,7 +16,9 @@ int __cdecl thrd_join(thrd_t thr, int *res)
     return thrd_error;
   if (!GetExitCodeThread(thr._Handle, &exit_code))
     return thrd_error;
+  if (!CloseHandle(thr._Handle))
+    return thrd_error;
   if (res)
     *res = exit_code;
-  return CloseHandle(thr._Handle) ? thrd_success : thrd_error;
+  return thrd_success;
 }
