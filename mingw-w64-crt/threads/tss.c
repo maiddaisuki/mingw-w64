@@ -170,21 +170,22 @@ void __cdecl tss_delete(tss_t key)
   unsigned short unused = (key._Idx & 0xffff) & ~1023;
   unsigned short idx = key._Idx & 1023;
 
+#ifndef __arm__
   /* If upper 22 bits of _Idx are zero then the key was
    * allocated by the vcruntime140_threads.dll tss_create.
-   * So forward call to the vcruntime140_threads.dll. */
+   * So forward call to the vcruntime140_threads.dll.
+   * There is no arm32 version of that DLL library. */
   if (__builtin_expect(unused == 0 && atom == 0, 0)) {
-    static void (__cdecl*vcruntime_tss_delete)(tss_t) = NULL;
-    if (!vcruntime_tss_delete) {
-      HMODULE dll = GetModuleHandleA("vcruntime140_threads.dll");
-      FARPROC proc = dll ? GetProcAddress(dll, "tss_delete") : NULL;
-      if (!proc)
-        return;
-      __atomic_store_n(&vcruntime_tss_delete, (void(__cdecl*)(tss_t))(void(*)(void))proc, __ATOMIC_SEQ_CST);
-    }
+    void (__cdecl*vcruntime_tss_delete)(tss_t) = NULL;
+    HMODULE dll = GetModuleHandleA("vcruntime140_threads.dll");
+    FARPROC proc = dll ? GetProcAddress(dll, "tss_delete") : NULL;
+    if (!proc)
+      return;
+    vcruntime_tss_delete = (void(__cdecl*)(tss_t))(void(*)(void))proc;
     vcruntime_tss_delete(key);
     return;
   }
+#endif
 
   /* If the atom is valid (non-zero) but is not our then it belongs to the
    * foreign DLL/EXE module. So forward call to the interface for that atom. */
@@ -209,20 +210,21 @@ void *__cdecl tss_get(tss_t key)
   unsigned short unused = (key._Idx & 0xffff) & ~1023;
   unsigned short idx = key._Idx & 1023;
 
+#ifndef __arm__
   /* If upper 22 bits of _Idx are zero then the key was
    * allocated by the vcruntime140_threads.dll tss_create.
-   * So forward call to the vcruntime140_threads.dll. */
+   * So forward call to the vcruntime140_threads.dll.
+   * There is no arm32 version of that DLL library. */
   if (__builtin_expect(unused == 0 && atom == 0, 0)) {
-    static void *(__cdecl*vcruntime_tss_get)(tss_t) = NULL;
-    if (!vcruntime_tss_get) {
-      HMODULE dll = GetModuleHandleA("vcruntime140_threads.dll");
-      FARPROC proc = dll ? GetProcAddress(dll, "tss_get") : NULL;
-      if (!proc)
-        return NULL;
-      __atomic_store_n(&vcruntime_tss_get, (void*(__cdecl*)(tss_t))(void(*)(void))proc, __ATOMIC_SEQ_CST);
-    }
+    void *(__cdecl*vcruntime_tss_get)(tss_t) = NULL;
+    HMODULE dll = GetModuleHandleA("vcruntime140_threads.dll");
+    FARPROC proc = dll ? GetProcAddress(dll, "tss_get") : NULL;
+    if (!proc)
+      return NULL;
+    vcruntime_tss_get = (void*(__cdecl*)(tss_t))(void(*)(void))proc;
     return vcruntime_tss_get(key);
   }
+#endif
 
   /* If the atom is valid (non-zero) but is not our then it belongs to the
    * foreign DLL/EXE module. So forward call to the interface for that atom. */
@@ -255,20 +257,21 @@ int __cdecl tss_set(tss_t key, void *val)
   unsigned short unused = (key._Idx & 0xffff) & ~1023;
   unsigned short idx = key._Idx & 1023;
 
+#ifndef __arm__
   /* If upper 22 bits of _Idx are zero then the key was
    * allocated by the vcruntime140_threads.dll tss_create.
-   * So forward call to the vcruntime140_threads.dll. */
+   * So forward call to the vcruntime140_threads.dll.
+   * There is no arm32 version of that DLL library. */
   if (__builtin_expect(unused == 0 && atom == 0, 0)) {
-    static int (__cdecl*vcruntime_tss_set)(tss_t,void*) = NULL;
-    if (!vcruntime_tss_set) {
-      HMODULE dll = GetModuleHandleA("vcruntime140_threads.dll");
-      FARPROC proc = dll ? GetProcAddress(dll, "tss_set") : NULL;
-      if (!proc)
-        return thrd_error;
-      __atomic_store_n(&vcruntime_tss_set, (int(__cdecl*)(tss_t,void*))(void(*)(void))proc, __ATOMIC_SEQ_CST);
-    }
+    int (__cdecl*vcruntime_tss_set)(tss_t,void*) = NULL;
+    HMODULE dll = GetModuleHandleA("vcruntime140_threads.dll");
+    FARPROC proc = dll ? GetProcAddress(dll, "tss_set") : NULL;
+    if (!proc)
+      return thrd_error;
+    vcruntime_tss_set = (int(__cdecl*)(tss_t,void*))(void(*)(void))proc;
     return vcruntime_tss_set(key, val);
   }
+#endif
 
   /* If the atom is valid (non-zero) but is not our then it belongs to the
    * foreign DLL/EXE module. So forward call to the interface for that atom. */
