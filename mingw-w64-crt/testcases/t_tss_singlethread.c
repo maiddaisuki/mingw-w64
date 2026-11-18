@@ -11,15 +11,19 @@ __declspec(dllimport) void __cdecl lib1_tss_delete(tss_t key);
 __declspec(dllimport) void *__cdecl lib1_tss_get(tss_t key);
 __declspec(dllimport) int __cdecl lib1_tss_set(tss_t key, void *val);
 
+static intptr_t lib2;
 static int (__cdecl *lib2_tss_create)(tss_t *key, tss_dtor_t dtor);
 static void (__cdecl *lib2_tss_delete)(tss_t key);
 static void *(__cdecl *lib2_tss_get)(tss_t key);
 static int (__cdecl *lib2_tss_set)(tss_t key, void *val);
 
+#ifndef __arm__
+static intptr_t vcrthrds;
 static int (__cdecl *vcrthrds_tss_create)(tss_t *key, tss_dtor_t dtor);
 static void (__cdecl *vcrthrds_tss_delete)(tss_t key);
 static void *(__cdecl *vcrthrds_tss_get)(tss_t key);
 static int (__cdecl *vcrthrds_tss_set)(tss_t key, void *val);
+#endif
 
 static int dtor_called = 0;
 
@@ -35,8 +39,7 @@ static void __cdecl dtor_func(void *val) {
 int main() {
   mingw_test_init();
 
-  intptr_t lib2, vcrthrds;
-  tss_t key0, key1, key2, key3;
+  tss_t key0, key1, key2;
 
   /* dtor function is not supported on Win9x */
   tss_dtor_t dtor = _osplatform != 1 ? dtor_func : NULL;
@@ -183,6 +186,8 @@ int main() {
   for (int i = 0; i < 2; i++) {
     vcrthrds = _loaddll("vcruntime140_threads.dll");
     if (vcrthrds) {
+      tss_t key3;
+
       vcrthrds_tss_create = (__typeof(vcrthrds_tss_create))(void(*)(void))_getdllprocaddr(vcrthrds, "tss_create", -1);
       assert(vcrthrds_tss_create);
       vcrthrds_tss_delete = (__typeof(vcrthrds_tss_delete))(void(*)(void))_getdllprocaddr(vcrthrds, "tss_delete", -1);
