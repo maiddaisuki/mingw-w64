@@ -811,6 +811,69 @@ jobs:
           make -j$(nproc) -C testcases clean
           make -j$(nproc) check -k -O --no-print-directory CFLAGS="-mcrtdll=msvcrt40" CXXFLAGS="-mcrtdll=msvcrt40" LDFLAGS='-static -mcrtdll=msvcrt40' TESTS=
           make -j$(nproc) check -k -O --no-print-directory CFLAGS="-mcrtdll=msvcrt40" CXXFLAGS="-mcrtdll=msvcrt40" LDFLAGS='-static -mcrtdll=msvcrt40' || { cat testcases/test-suite.log; exit 1; }
+      - name: Run testcases for msvcr70.dll
+        if: matrix.arch == 'i686' && matrix.crt == 'msvcrt'
+        continue-on-error: true
+        run: |
+          export PATH=/gcc-mingw/bin:$PATH
+          cd mingw-w64-crt/build
+          make -j$(nproc) -C testcases clean
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr70' CXXFLAGS='-mcrtdll=msvcr70' LDFLAGS='-static -mcrtdll=msvcr70' TESTS=
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr70' CXXFLAGS='-mcrtdll=msvcr70' LDFLAGS='-static -mcrtdll=msvcr70' || { cat testcases/test-suite.log; exit 1; }
+      - name: Run testcases for msvcr71.dll
+        if: matrix.arch == 'i686' && matrix.crt == 'msvcrt'
+        continue-on-error: true
+        run: |
+          export PATH=/gcc-mingw/bin:$PATH
+          cd mingw-w64-crt/build
+          make -j$(nproc) -C testcases clean
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr71' CXXFLAGS='-mcrtdll=msvcr71' LDFLAGS='-static -mcrtdll=msvcr71' TESTS=
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr71' CXXFLAGS='-mcrtdll=msvcr71' LDFLAGS='-static -mcrtdll=msvcr71' || { cat testcases/test-suite.log; exit 1; }
+      - name: Run testcases for msvcr80.dll
+        if: (matrix.arch == 'i686' || matrix.arch == 'x86_64') && matrix.crt == 'msvcrt'
+        continue-on-error: true
+        run: |
+          export PATH=/gcc-mingw/bin:$PATH
+          cd mingw-w64-crt/build
+          make -j$(nproc) -C testcases clean
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr80' CXXFLAGS='-mcrtdll=msvcr80' LDFLAGS='-static -mcrtdll=msvcr80' TESTS=
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr80' CXXFLAGS='-mcrtdll=msvcr80' LDFLAGS='-static -mcrtdll=msvcr80' || { cat testcases/test-suite.log; exit 1; }
+      - name: Run testcases for msvcr90.dll
+        if: (matrix.arch == 'i686' || matrix.arch == 'x86_64') && matrix.crt == 'msvcrt'
+        continue-on-error: true
+        run: |
+          export PATH=/gcc-mingw/bin:$PATH
+          cd mingw-w64-crt/build
+          make -j$(nproc) -C testcases clean
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr90' CXXFLAGS='-mcrtdll=msvcr90' LDFLAGS='-static -mcrtdll=msvcr90' TESTS=
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr90' CXXFLAGS='-mcrtdll=msvcr90' LDFLAGS='-static -mcrtdll=msvcr90' || { cat testcases/test-suite.log; exit 1; }
+      - name: Run testcases for msvcr100.dll
+        if: (matrix.arch == 'i686' || matrix.arch == 'x86_64') && matrix.crt == 'msvcrt'
+        continue-on-error: true
+        run: |
+          export PATH=/gcc-mingw/bin:$PATH
+          cd mingw-w64-crt/build
+          make -j$(nproc) -C testcases clean
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr100' CXXFLAGS='-mcrtdll=msvcr100' LDFLAGS='-static -mcrtdll=msvcr100' TESTS=
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr100' CXXFLAGS='-mcrtdll=msvcr100' LDFLAGS='-static -mcrtdll=msvcr100' || { cat testcases/test-suite.log; exit 1; }
+      - name: Run testcases for msvcr110.dll
+        if: (matrix.arch == 'i686' || matrix.arch == 'x86_64') && matrix.crt == 'msvcrt'
+        continue-on-error: true
+        run: |
+          export PATH=/gcc-mingw/bin:$PATH
+          cd mingw-w64-crt/build
+          make -j$(nproc) -C testcases clean
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr110' CXXFLAGS='-mcrtdll=msvcr110' LDFLAGS='-static -mcrtdll=msvcr110' TESTS=
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr110' CXXFLAGS='-mcrtdll=msvcr110' LDFLAGS='-static -mcrtdll=msvcr110' || { cat testcases/test-suite.log; exit 1; }
+      - name: Run testcases for msvcr120.dll
+        if: (matrix.arch == 'i686' || matrix.arch == 'x86_64') && matrix.crt == 'msvcrt'
+        continue-on-error: true
+        run: |
+          export PATH=/gcc-mingw/bin:$PATH
+          cd mingw-w64-crt/build
+          make -j$(nproc) -C testcases clean
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr120' CXXFLAGS='-mcrtdll=msvcr120' LDFLAGS='-static -mcrtdll=msvcr120' TESTS=
+          make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr120' CXXFLAGS='-mcrtdll=msvcr120' LDFLAGS='-static -mcrtdll=msvcr120' || { cat testcases/test-suite.log; exit 1; }
       - name: Run testcases for ucrtapp
         if: matrix.crt == 'ucrt'
         run: |
