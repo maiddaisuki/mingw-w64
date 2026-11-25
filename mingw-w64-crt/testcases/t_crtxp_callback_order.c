@@ -39,7 +39,10 @@ static int dtor_called = 0;
 static int crtxpb_called = 0;
 
 /* .CRT$XPW is the last callback in msvc which has CRT stdio access */
-__declspec(noreturn) static void __cdecl crtxpw_callback(void)
+#ifndef DLL_BUILD
+__declspec(noreturn)
+#endif
+static void __cdecl crtxpw_callback(void)
 {
   puts(".CRT$XPW callback");
   if (main_success == 1 &&
