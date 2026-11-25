@@ -19,6 +19,11 @@ check_LIBRARIES = \
 libtest_a_SOURCES = \
   libtest.c libtest.h
 
+# Used by t_crtxp_callback_order
+libcrtxp.dll: libcrtxp.o
+	$(LINK) -shared -o $@ $^
+t_crtxp_callback_order.exe: libcrtxp.dll
+
 # Used by t_safe_flush
 libprocdetach.dll: libprocdetach.o
 	$(LINK) -shared libprocdetach.o -o libprocdetach.dll
@@ -97,6 +102,7 @@ testcase_progs = \
   t_btowc \
   t_char16_t \
   t_cpp_dtor_atexit_order \
+  t_crtxp_callback_order \
   t_ctype \
   t_excpt_gcc_cpp \
   t_excpt_int_divzero \
@@ -334,6 +340,7 @@ EXTRA_DIST = \
   t_swprintf_tmpl.h
 
 CLEANFILES = \
+  libcrtxp.dll \
   libglbctors.dll \
   libnoatexit.dll \
   libnontls.dll \

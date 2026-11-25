@@ -46,6 +46,8 @@ extern _PIFV __xi_a[];
 extern _PIFV __xi_z[];
 extern _PVFV __xc_a[];
 extern _PVFV __xc_z[];
+extern _PVFV __xp_a[];
+extern _PVFV __xp_z[];
 
 
 const int __defaultmatherr __attribute__((common)); /* tentative */
@@ -117,8 +119,15 @@ cpp_unhandled_exception_filter (EXCEPTION_POINTERS *exception_data)
 }
 
 static void
-safe_flush (void)
+last_atexit_handler (void)
 {
+  /* Call all .CRT$XP* destructor callbacks after all atexit handlers. */
+  _initterm (__xp_a, __xp_z);
+
+  /* The C RunTime library flushes stdio streams in response to
+   * DLL_PROCESS_DETACH. This is not entirely safe; other DLLs
+   * may cause instant termination during process shutdown.
+   */
   fflush (NULL);
 }
 
@@ -195,12 +204,11 @@ __tmainCRTStartup (void)
 	 */
 	setvbuf (stderr, NULL, _IONBF, 0);
 
-	/* The C RunTime library flushes stdio streams in response to
-	 * DLL_PROCESS_DETACH. This is not entirely safe; other DLLs
-	 * may cause instant termination during process shutdown.
-	 * Here we add an exit handler to flush streams safely.
+	/* Schedule execution of all callbacks which have to be called
+	 * after all atexit handlers were called. The first registered
+	 * atexit handler is called as the last one.
 	 */
-	if (atexit (safe_flush) != 0)
+	if (atexit (last_atexit_handler) != 0)
 	  _amsg_exit (26); /* _RT_STDIOINIT */
 
 	_pei386_runtime_relocator ();

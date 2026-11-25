@@ -24,6 +24,8 @@ extern _PIFV __xi_a[];
 extern _PIFV __xi_z[];
 extern _PVFV __xc_a[];
 extern _PVFV __xc_z[];
+extern _PVFV __xp_a[];
+extern _PVFV __xp_z[];
 
 
 /* TLS initialization hook.  */
@@ -147,6 +149,7 @@ i__leave:
 	  if (__mingw_dll_atexit_table_func_ptr != NULL)
 	    __mingw_dll_atexit_table_func_ptr (1 /*execute*/);
 	  __mingw_dll_do_global_dtors ();
+	  _initterm (__xp_a, __xp_z);
 
 	  __native_startup_state = __uninitialized;
 	}

@@ -10,3 +10,5 @@ _CRTALLOC(".CRT$XIA") const _PIFV __xi_a[] = { NULL };
 _CRTALLOC(".CRT$XIZ") const _PIFV __xi_z[] = { NULL };
 _CRTALLOC(".CRT$XCA") const _PVFV __xc_a[] = { NULL };
 _CRTALLOC(".CRT$XCZ") const _PVFV __xc_z[] = { NULL };
+_CRTALLOC(".CRT$XPA") const _PVFV __xp_a[] = { NULL };
+_CRTALLOC(".CRT$XPZ") const _PVFV __xp_z[] = { NULL };
