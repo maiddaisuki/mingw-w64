@@ -794,7 +794,7 @@ jobs:
           make -j$(nproc) check -i -O --no-print-directory CFLAGS="-mcrtdll=crtdll" CXXFLAGS="-mcrtdll=crtdll" LDFLAGS='-static -mcrtdll=crtdll' TESTS=
           cp -a "C:\Windows\WinSxS\x86_microsoft-windows-crtdll_31bf3856ad364e35_10.0.26100.1_none_82a9fe5e3ade4a14\crtdll.dll" testcases/
           make -j$(nproc) check -i -O --no-print-directory CFLAGS="-mcrtdll=crtdll" CXXFLAGS="-mcrtdll=crtdll" LDFLAGS='-static -mcrtdll=crtdll' || { cat testcases/test-suite.log; exit 1; }
-          del testcases/crtdll.dll
+          rm -f testcases/crtdll.dll
       - name: Run testcases for msvcrt20.dll
         if: matrix.arch == 'i686' && matrix.crt == 'msvcrt'
         run: |
