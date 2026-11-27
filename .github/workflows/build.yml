@@ -857,7 +857,7 @@ jobs:
           elif [ "${{matrix.arch}}" = "x86_64" ]; then
               curl -L https://download.microsoft.com/download/1/6/5/165255e7-1014-4d0a-b094-b6a430a6bffc/vcredist_x64.exe -o vcredist.exe
           fi
-          ./vcredist.exe /q /norestart
+          ./vcredist.exe -q -norestart
           rm -f vcredist.exe
           make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr100' CXXFLAGS='-mcrtdll=msvcr100' LDFLAGS='-static -mcrtdll=msvcr100' || { cat testcases/test-suite.log; exit 1; }
       - name: Build testcases for msvcr110.dll
@@ -878,7 +878,7 @@ jobs:
           elif [ "${{matrix.arch}}" = "x86_64" ]; then
               curl -L https://download.microsoft.com/download/1/6/b/16b06f60-3b20-4ff2-b699-5e9b7962f9ae/VSU_4/vcredist_x64.exe -o vcredist.exe
           fi
-          ./vcredist.exe /q /norestart
+          ./vcredist.exe -q -norestart
           rm -f vcredist.exe
           make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr110' CXXFLAGS='-mcrtdll=msvcr110' LDFLAGS='-static -mcrtdll=msvcr110' || { cat testcases/test-suite.log; exit 1; }
       - name: Build testcases for msvcr120.dll
@@ -899,7 +899,7 @@ jobs:
           elif [ "${{matrix.arch}}" = "x86_64" ]; then
               curl -L https://download.visualstudio.microsoft.com/download/pr/10912041/cee5d6bca2ddbcd039da727bf4acb48a/vcredist_x64.exe -o vcredist.exe
           fi
-          ./vcredist.exe /q /norestart
+          ./vcredist.exe -q -norestart
           rm -f vcredist.exe
           make -j$(nproc) check -k -O --no-print-directory CFLAGS='-mcrtdll=msvcr120' CXXFLAGS='-mcrtdll=msvcr120' LDFLAGS='-static -mcrtdll=msvcr120' || { cat testcases/test-suite.log; exit 1; }
       - name: Run testcases for ucrtapp
