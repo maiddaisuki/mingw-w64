@@ -690,7 +690,7 @@ jobs:
         if: matrix.arch == 'i686' && matrix.crt == 'msvcrt'
         continue-on-error: true
         run: |
-          export PATH=/gcc-mingw/bin:$PATH
+          export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) -C testcases clean
           make -j$(nproc) check -k -O --no-print-directory CPPFLAGS='-D__MSVCRT_VERSION__=0x400' LDFLAGS='-static -lmsvcrt40' TESTS=
@@ -699,7 +699,7 @@ jobs:
         if: matrix.arch == 'i686' && matrix.crt == 'msvcrt'
         continue-on-error: true
         run: |
-          export PATH=/gcc-mingw/bin:$PATH
+          export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) -C testcases clean
           make -j$(nproc) check -k -O --no-print-directory CPPFLAGS='-D__MSVCRT_VERSION__=0x700' LDFLAGS='-static -lmsvcr70' TESTS=
@@ -707,28 +707,28 @@ jobs:
         if: matrix.arch == 'i686' && matrix.crt == 'msvcrt'
         continue-on-error: true
         run: |
-          export PATH=/gcc-mingw/bin:$PATH
+          export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) -C testcases clean
           make -j$(nproc) check -k -O --no-print-directory CPPFLAGS='-D__MSVCRT_VERSION__=0x701' LDFLAGS='-static -lmsvcr71' TESTS=
       - name: Build mingw-w64-crt testcases for msvcr80.dll
         if: (matrix.arch == 'i686' || matrix.arch == 'x86_64') && matrix.crt == 'msvcrt'
         run: |
-          export PATH=/gcc-mingw/bin:$PATH
+          export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) -C testcases clean
           make -j$(nproc) check -k -O --no-print-directory CPPFLAGS='-D__MSVCRT_VERSION__=0x800' LDFLAGS='-static -lmsvcr80' TESTS=
       - name: Build mingw-w64-crt testcases for msvcr90.dll
         if: (matrix.arch == 'i686' || matrix.arch == 'x86_64') && matrix.crt == 'msvcrt'
         run: |
-          export PATH=/gcc-mingw/bin:$PATH
+          export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) -C testcases clean
           make -j$(nproc) check -k -O --no-print-directory CPPFLAGS='-D__MSVCRT_VERSION__=0x900' LDFLAGS='-static -lmsvcr90' TESTS=
       - name: Build mingw-w64-crt testcases for msvcr100.dll
         if: (matrix.arch == 'i686' || matrix.arch == 'x86_64') && matrix.crt == 'msvcrt'
         run: |
-          export PATH=/gcc-mingw/bin:$PATH
+          export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) -C testcases clean
           make -j$(nproc) check -k -O --no-print-directory CPPFLAGS='-D__MSVCRT_VERSION__=0xA00' LDFLAGS='-static -lmsvcr100' TESTS=
@@ -736,20 +736,21 @@ jobs:
         if: (matrix.arch == 'i686' || matrix.arch == 'x86_64') && matrix.crt == 'msvcrt'
         continue-on-error: true
         run: |
-          export PATH=/gcc-mingw/bin:$PATH
+          export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           if [ "${{matrix.arch}}" = "i686" ]; then
               curl -L https://download.microsoft.com/download/1/6/5/165255e7-1014-4d0a-b094-b6a430a6bffc/vcredist_x86.exe -o vcredist.exe
           elif [ "${{matrix.arch}}" = "x86_64" ]; then
               curl -L https://download.microsoft.com/download/1/6/5/165255e7-1014-4d0a-b094-b6a430a6bffc/vcredist_x64.exe -o vcredist.exe
           fi
-          ./vcredist.exe /q /norestart
+          echo "vcredist.exe /q /norestart" >>vcredist.bat
+          cat vcredist.bat | cmd.exe
           rm -f vcredist.exe
           make -j$(nproc) check -k -O --no-print-directory CPPFLAGS='-D__MSVCRT_VERSION__=0xA00' LDFLAGS='-static -lmsvcr100' || { cat testcases/test-suite.log; exit 1; }
       - name: Build mingw-w64-crt testcases for msvcr110.dll
         if: (matrix.arch == 'i686' || matrix.arch == 'x86_64' || matrix.arch == 'armv7') && matrix.crt == 'msvcrt'
         run: |
-          export PATH=/gcc-mingw/bin:$PATH
+          export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) -C testcases clean
           make -j$(nproc) check -k -O --no-print-directory CPPFLAGS='-D__MSVCRT_VERSION__=0xB00' LDFLAGS='-static -lmsvcr110' TESTS=
@@ -757,20 +758,21 @@ jobs:
         if: (matrix.arch == 'i686' || matrix.arch == 'x86_64') && matrix.crt == 'msvcrt'
         continue-on-error: true
         run: |
-          export PATH=/gcc-mingw/bin:$PATH
+          export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           if [ "${{matrix.arch}}" = "i686" ]; then
               curl -L https://download.microsoft.com/download/1/6/b/16b06f60-3b20-4ff2-b699-5e9b7962f9ae/VSU_4/vcredist_x86.exe -o vcredist.exe
           elif [ "${{matrix.arch}}" = "x86_64" ]; then
               curl -L https://download.microsoft.com/download/1/6/b/16b06f60-3b20-4ff2-b699-5e9b7962f9ae/VSU_4/vcredist_x64.exe -o vcredist.exe
           fi
-          ./vcredist.exe /q /norestart
+          echo "vcredist.exe /q /norestart" >>vcredist.bat
+          cat vcredist.bat | cmd.exe
           rm -f vcredist.exe
           make -j$(nproc) check -k -O --no-print-directory CPPFLAGS='-D__MSVCRT_VERSION__=0xB00' LDFLAGS='-static -lmsvcr110' || { cat testcases/test-suite.log; exit 1; }
       - name: Build mingw-w64-crt testcases for msvcr120.dll
         if: (matrix.arch == 'i686' || matrix.arch == 'x86_64' || matrix.arch == 'armv7') && matrix.crt == 'msvcrt'
         run: |
-          export PATH=/gcc-mingw/bin:$PATH
+          export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           make -j$(nproc) -C testcases clean
           make -j$(nproc) check -k -O --no-print-directory CPPFLAGS='-D__MSVCRT_VERSION__=0xC00' LDFLAGS='-static -lmsvcr120' TESTS=
@@ -778,14 +780,15 @@ jobs:
         if: (matrix.arch == 'i686' || matrix.arch == 'x86_64') && matrix.crt == 'msvcrt'
         continue-on-error: true
         run: |
-          export PATH=/gcc-mingw/bin:$PATH
+          export PATH=/llvm-mingw/bin:$PATH
           cd mingw-w64-crt/build
           if [ "${{matrix.arch}}" = "i686" ]; then
               curl -L https://download.visualstudio.microsoft.com/download/pr/10912113/5da66ddebb0ad32ebd4b922fd82e8e25/vcredist_x86.exe -o vcredist.exe
           elif [ "${{matrix.arch}}" = "x86_64" ]; then
               curl -L https://download.visualstudio.microsoft.com/download/pr/10912041/cee5d6bca2ddbcd039da727bf4acb48a/vcredist_x64.exe -o vcredist.exe
           fi
-          ./vcredist.exe /q /norestart
+          echo "vcredist.exe /q /norestart" >>vcredist.bat
+          cat vcredist.bat | cmd.exe
           rm -f vcredist.exe
           make -j$(nproc) check -k -O --no-print-directory CPPFLAGS='-D__MSVCRT_VERSION__=0xC00' LDFLAGS='-static -lmsvcr120' || { cat testcases/test-suite.log; exit 1; }
       - name: Run mingw-w64-crt testcases for ucrtapp
